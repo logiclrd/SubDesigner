@@ -9,7 +9,7 @@ namespace SubDesigner
 		{
 			Name = name;
 		}
-			
+
 		public string Name;
 		public List<BitmapSource> Stamps = new List<BitmapSource>();
 	}

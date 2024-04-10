@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -13,6 +14,8 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 
+using HelixToolkit.Wpf;
+
 namespace SubDesigner
 {
 	/// <summary>
@@ -20,31 +23,98 @@ namespace SubDesigner
 	/// </summary>
 	public partial class PaintSurface : UserControl
 	{
+		static PaintSurface()
+		{
+			HasSelectionProperty = DependencyProperty.Register(nameof(HasSelection), typeof(bool), typeof(PaintSurface));
+		}
+
+		public readonly static DependencyProperty HasSelectionProperty;
+		public event EventHandler<UIElement> ItemModified;
+
 		public PaintSurface()
 		{
 			InitializeComponent();
+
+			MouseDown +=
+				(_, e) =>
+				{
+					if ((_manipulator != null) && !e.Handled)
+						ClearSelection();
+				};
+		}
+
+		public bool HasSelection
+		{
+			get => (bool)GetValue(HasSelectionProperty);
+			set => SetValue(HasSelectionProperty, value);
+		}
+
+		public event EventHandler<UIElement> ChangeMade;
+
+		protected virtual void OnChangeMade(UIElement changedItem)
+		{
+			ChangeMade?.Invoke(this, changedItem);
+		}
+
+		ElementManipulator? _manipulator;
+
+		public void ClearSelection()
+		{
+			if (_manipulator != null)
+			{
+				_manipulator.LostFocus -= manipulator_LostFocus;
+				cnvContents.Children.Remove(_manipulator);
+			}
+
+			HasSelection = false;
+		}
+
+		private void manipulator_ChangeMade(object? sender, UIElement changedItem)
+		{
+			OnChangeMade(changedItem);
+		}
+
+		private void manipulator_LostFocus(object sender, RoutedEventArgs e)
+		{
+			ClearSelection();
 		}
 
 		public void AddStamp(Point location, ImageSource stampBitmap, Size initialSize)
 		{
-			location = new Point(
-				location.X * 2048 / this.ActualWidth,
-				location.Y * 855 / this.ActualHeight);
+			var stamp = new Image();
 
-			initialSize = new Size(
-				initialSize.Width * 2048 / this.ActualWidth,
-				initialSize.Height * 855 / this.ActualHeight);
+			stamp.Width = initialSize.Width;
+			stamp.Height = initialSize.Height;
+			stamp.Source = stampBitmap;
 
-			var image = new Image();
+			Canvas.SetLeft(stamp, location.X);
+			Canvas.SetTop(stamp, location.Y);
 
-			image.Width = initialSize.Width;
-			image.Height = initialSize.Height;
-			image.Source = stampBitmap;
+			cnvContents.Children.Add(stamp);
 
-			Canvas.SetLeft(image, location.X);
-			Canvas.SetTop(image, location.Y);
+			stamp.MouseDown += element_MouseDown;
+		}
 
-			cnvContents.Children.Add(image);
+		private void element_MouseDown(object sender, MouseButtonEventArgs e)
+		{
+			if (_manipulator != null)
+				ClearSelection();
+
+			var element = (FrameworkElement)sender;
+
+			_manipulator = new ElementManipulator();
+
+			_manipulator.Wrap(element);
+
+			cnvContents.Children.Add(_manipulator);
+			_manipulator.Focus();
+
+			HasSelection = true;
+
+			e.Handled = true;
+
+			_manipulator.ChangeMade += manipulator_ChangeMade;
+			_manipulator.LostFocus += manipulator_LostFocus;
 		}
 	}
 }

@@ -1,7 +1,8 @@
 ﻿<UserControl x:Class="SubDesigner.PaintSurface"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             ClipToBounds="True">
+             ClipToBounds="True"
+             Focusable="True">
     <Canvas Name="cnvContents">
     </Canvas>
 </UserControl>

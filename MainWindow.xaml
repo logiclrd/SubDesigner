@@ -1,11 +1,9 @@
 ﻿<Window x:Class="SubDesigner.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:SubDesigner"
-        mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800"
+        Title="SubDesigner"
+        WindowStyle="None"
         WindowState="Maximized">
     <Grid Name="grdTopLevel">
         <Grid Name="grdLayout">
@@ -17,10 +15,10 @@
                 <RowDefinition Height="4*" />
                 <RowDefinition Height="1*" />
             </Grid.RowDefinitions>
-            <Viewport3D Name="v3dViewport" Grid.Column="1" MouseDown="v3dViewport_MouseDown" MouseMove="v3dViewport_MouseMove" MouseUp="v3dViewport_MouseUp" />
+            <Viewport3D Name="v3dViewport" Grid.Column="1" MouseDown="StartMugDrag" MouseMove="DoMugDrag" MouseUp="EndMugDrag" />
             <Rectangle Fill="#EEE" Grid.Column="0" Grid.Row="0" />
-            <Viewbox>
-                <local:PaintSurface Background="White" x:Name="psPaintSurface" Width="2048" Height="855" Margin="10" />
+            <Viewbox Name="vbPaintSurfaceContainer">
+                <local:PaintSurface Background="White" x:Name="psPaintSurface" Width="2048" Height="855" Margin="10" MouseDown="StartMugDrag" MouseMove="DoMugDrag" MouseUp="EndMugDrag" ChangeMade="psPaintSurface_ChangeMade" />
             </Viewbox>
             <ScrollViewer Grid.Row="1" Grid.ColumnSpan="2" VerticalScrollBarVisibility="Disabled" HorizontalScrollBarVisibility="Visible">
                 <StackPanel Orientation="Horizontal" Name="spStamps">

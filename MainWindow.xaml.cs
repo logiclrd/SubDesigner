@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Windows;
@@ -23,8 +24,17 @@ namespace SubDesigner
 		{
 			InitializeComponent();
 
+			_rotation = new AxisAngleRotation3D();
+			_rotation.Axis = new Vector3D(0, 1, 0);
+
 			InitializeModel();
 			InitializeStamps();
+
+			psPaintSurface.ChangeMade += (_, _) => UpdateMugPreview();
+
+			var hasSelectionDescriptor = DependencyPropertyDescriptor.FromProperty(PaintSurface.HasSelectionProperty, typeof(PaintSurface));
+
+			hasSelectionDescriptor.AddValueChanged(psPaintSurface, (_, _) => UpdateMugPreview());
 		}
 
 		void InitializeModel()
@@ -42,9 +52,6 @@ namespace SubDesigner
 
 			// Set up rotation controls
 			var rotationTransform = new RotateTransform3D();
-
-			_rotation = new AxisAngleRotation3D();
-			_rotation.Axis = new Vector3D(0, 1, 0);
 
 			rotationTransform.Rotation = _rotation;
 
@@ -232,20 +239,20 @@ namespace SubDesigner
 		WriteableBitmap? _textureImage;
 
 		ModelVisual3D? _visual;
-		AxisAngleRotation3D? _rotation;
+		AxisAngleRotation3D _rotation;
 
 		bool _dragging = false;
+		IInputElement? _dragSender;
 		Point _dragPosition;
 		double _dragStartAngle;
 
-		private void v3dViewport_MouseDown(object sender, MouseButtonEventArgs e)
+		private void StartMugDrag(object sender, MouseButtonEventArgs e)
 		{
-			if (_rotation == null)
-				return;
+			_dragSender = (IInputElement)sender;
 
 			_dragging = (e.LeftButton == MouseButtonState.Pressed);
 
-			var clickPosition = Mouse.GetPosition(v3dViewport);
+			var clickPosition = Mouse.GetPosition(_dragSender);
 
 			_dragPosition = new Point(
 				clickPosition.X - v3dViewport.ActualWidth * 0.5,
@@ -253,14 +260,14 @@ namespace SubDesigner
 
 			_dragStartAngle = _rotation.Angle;
 
-			v3dViewport.CaptureMouse();
+			_dragSender.CaptureMouse();
 		}
 
-		private void v3dViewport_MouseMove(object sender, MouseEventArgs e)
+		private void DoMugDrag(object sender, MouseEventArgs e)
 		{
-			if (_dragging && (_rotation != null))
+			if (_dragging && (sender == _dragSender))
 			{
-				Point mousePosition = Mouse.GetPosition(v3dViewport);
+				Point mousePosition = Mouse.GetPosition(_dragSender);
 
 				Point relativeMousePosition = new Point(
 					mousePosition.X - v3dViewport.ActualWidth * 0.5,
@@ -272,10 +279,18 @@ namespace SubDesigner
 			}
 		}
 
-		private void v3dViewport_MouseUp(object sender, MouseButtonEventArgs e)
+		private void EndMugDrag(object sender, MouseButtonEventArgs e)
 		{
-			_dragging = (e.LeftButton == MouseButtonState.Pressed);
-			v3dViewport.ReleaseMouseCapture();
+			if (sender == _dragSender)
+			{
+				_dragging = (e.LeftButton == MouseButtonState.Pressed);
+
+				if (!_dragging)
+				{
+					_dragSender.ReleaseMouseCapture();
+					_dragSender = null;
+				}
+			}
 		}
 
 		private void cmdSelectCollection_Click(object sender, RoutedEventArgs e)
@@ -402,8 +417,10 @@ namespace SubDesigner
 
 							var mousePosition = e2.GetPosition(psPaintSurface);
 
-							var topLeft = mousePosition - clickOffset;
-							var bottomRight = topLeft + new Vector(dragImage.ActualWidth, dragImage.ActualHeight);
+							double scaleFactor = psPaintSurface.ActualWidth / vbPaintSurfaceContainer.ActualWidth;
+
+							var topLeft = mousePosition - scaleFactor * clickOffset;
+							var bottomRight = topLeft + scaleFactor * new Vector(dragImage.ActualWidth, dragImage.ActualHeight);
 
 							bool offLeftEdge = bottomRight.X < 0;
 							bool offTopEdge = bottomRight.Y < 0;
@@ -412,7 +429,7 @@ namespace SubDesigner
 
 							if (!offLeftEdge && !offTopEdge && !offRightEdge && !offBottomEdge)
 							{
-								psPaintSurface.AddStamp(topLeft, image.Source, dragImage.RenderSize);
+								psPaintSurface.AddStamp(topLeft, image.Source, (Size)(bottomRight - topLeft));
 								UpdateMugPreview();
 							}
 
@@ -425,6 +442,13 @@ namespace SubDesigner
 							}
 						};
 				};
+		}
+
+		private void psPaintSurface_ChangeMade(object sender, UIElement e)
+		{
+			var centreX = Canvas.GetLeft(e) + e.RenderSize.Width * 0.5;
+
+			_rotation.Angle = MugStartAngle + centreX * (MugEndAngle - MugStartAngle) / 2048.0;
 		}
 	}
 }
