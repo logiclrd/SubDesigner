@@ -1,0 +1,91 @@
+			if (_textureImage == null)
+				return;
+
+			var x1 = _rnd.Next(2048);
+			var x2 = _rnd.Next(2048);
+			var y1 = _rnd.Next(855);
+			var y2 = _rnd.Next(855);
+
+			if (_textureImage.TryLock(new Duration(TimeSpan.FromMilliseconds(50))))
+			{
+				const int PixelColour = unchecked((int)0xFFFF0000);
+
+				unsafe
+				{
+					byte *backBuffer = (byte *)_textureImage.BackBuffer;
+
+					try
+					{
+						int w = _textureImage.PixelWidth;
+						int h = _textureImage.PixelHeight;
+						int stride = _textureImage.BackBufferStride;
+
+						int dx = Math.Abs(x2 - x1);
+						int dy = Math.Abs(y2 - y1);
+
+						if (dx > dy)
+						{
+							if (x1 > x2)
+							{
+								Swap(ref x1, ref x2);
+								Swap(ref y1, ref y2);
+							}
+
+							dy = y2 - y1;
+
+							for (int x = x1; x <= x2; x++)
+							{
+								int y = (x - x1) * dy / dx + y1;
+
+								if ((x >= 0) && (x < w) && (y >= 0) && (y < h))
+								{
+									int o = y * _textureImage.BackBufferStride + x * 4;
+
+									byte *pixelPointer = &backBuffer[o];
+
+									*(int *)pixelPointer = PixelColour;
+								}
+							}
+						}
+						else
+						{
+							if (y1 > y2)
+							{
+								Swap(ref x1, ref x2);
+								Swap(ref y1, ref y2);
+							}
+
+							dx = x2 - x1;
+
+							for (int y = y1; y <= y2; y++)
+							{
+								int x = (y - y1) * dx / dy + x1;
+
+								if ((x >= 0) && (x < w) && (y >= 0) && (y < h))
+								{
+									int o = y * _textureImage.BackBufferStride + x * 4;
+
+									byte *pixelPointer = &backBuffer[o];
+
+									*(int *)pixelPointer = PixelColour;
+								}
+							}
+						}
+					}
+					finally
+					{
+						_textureImage.AddDirtyRect(new Int32Rect(0, 0, _textureImage.PixelWidth, _textureImage.PixelHeight));
+						_textureImage.Unlock();
+					}
+				}
+			}
+
+
+
+		static void Swap<T>(ref T a, ref T b)
+		{
+			T c = a;
+			a = b;
+			b = c;
+		}
+

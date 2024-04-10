@@ -7,22 +7,28 @@
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800"
         WindowState="Maximized">
-    <Grid Name="grdLayout">
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="3*" />
-            <ColumnDefinition Width="1.33*" />
-        </Grid.ColumnDefinitions>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="4*" />
-            <RowDefinition Height="1*" />
-        </Grid.RowDefinitions>
-        <Viewport3D Name="v3dViewport" Grid.Column="1" MouseDown="v3dViewport_MouseDown" MouseMove="v3dViewport_MouseMove" MouseUp="v3dViewport_MouseUp" />
-        <Rectangle Fill="#EEE" Grid.Column="0" Grid.Row="0" />
-        <Viewbox>
-            <local:PaintSurface Background="White" x:Name="psPaintSurface" Width="2048" Height="855" Margin="10" />
-        </Viewbox>
-        <ScrollViewer Grid.Row="1" Grid.ColumnSpan="2">
-            <StackPanel Orientation="Horizontal" Name="spTools" />
-        </ScrollViewer>
+    <Grid Name="grdTopLevel">
+        <Grid Name="grdLayout">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="3*" />
+                <ColumnDefinition Width="1.33*" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="4*" />
+                <RowDefinition Height="1*" />
+            </Grid.RowDefinitions>
+            <Viewport3D Name="v3dViewport" Grid.Column="1" MouseDown="v3dViewport_MouseDown" MouseMove="v3dViewport_MouseMove" MouseUp="v3dViewport_MouseUp" />
+            <Rectangle Fill="#EEE" Grid.Column="0" Grid.Row="0" />
+            <Viewbox>
+                <local:PaintSurface Background="White" x:Name="psPaintSurface" Width="2048" Height="855" Margin="10" />
+            </Viewbox>
+            <ScrollViewer Grid.Row="1" Grid.ColumnSpan="2" VerticalScrollBarVisibility="Disabled" HorizontalScrollBarVisibility="Visible">
+                <StackPanel Orientation="Horizontal" Name="spStamps">
+                    <Button Name="cmdSelectCollection" Click="cmdSelectCollection_Click" BorderThickness="0" Background="White">
+                        <local:StampCollectionButton />
+                    </Button>
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
     </Grid>
 </Window>

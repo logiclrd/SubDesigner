@@ -1,6 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -20,14 +23,24 @@ namespace SubDesigner
 		{
 			InitializeComponent();
 
+			InitializeModel();
+			InitializeStamps();
+		}
+
+		void InitializeModel()
+		{
+			// Import the model files
 			var importer = new ModelImporter();
 
 			var model = importer.Load("Mug.obj", Dispatcher);
 
+			// Find the ImageSource that'll let us update the texture at runtime
 			_textureImage = FindTexture(model);
 
+			// Basic lighting
 			model.Children.Add(new AmbientLight(Color.FromRgb(128, 128, 128)));
 
+			// Set up rotation controls
 			var rotationTransform = new RotateTransform3D();
 
 			_rotation = new AxisAngleRotation3D();
@@ -44,6 +57,7 @@ namespace SubDesigner
 			transformGroup.Children.Add(rotationTransform);
 			transformGroup.Children.Add(pitchTransform);
 
+			// Present the model
 			_visual = new ModelVisual3D();
 			_visual.Content = model;
 			_visual.Transform = transformGroup;
@@ -59,14 +73,12 @@ namespace SubDesigner
 					FieldOfView = 45
 				};
 
-			var timer = new DispatcherTimer(DispatcherPriority.Normal, Dispatcher);
-
-			timer.Tick += Timer_Tick;
-			timer.Interval = TimeSpan.FromMilliseconds(100);
-			timer.Start();
-
 			v3dViewport.Children.Add(_visual);
 			v3dViewport.Children.Add(new DefaultLights());
+
+			Dispatcher.BeginInvoke(
+				() => UpdateMugPreview(),
+				DispatcherPriority.ApplicationIdle);
 		}
 
 		WriteableBitmap? FindTexture(Model3DGroup model)
@@ -104,103 +116,123 @@ namespace SubDesigner
 			return null;
 		}
 
-		Random _rnd = new Random();
-		WriteableBitmap? _textureImage;
-
-		private void Timer_Tick(object? sender, EventArgs e)
+		void UpdateMugPreview()
 		{
 			if (_textureImage == null)
 				return;
 
-			var x1 = _rnd.Next(2048);
-			var x2 = _rnd.Next(2048);
-			var y1 = _rnd.Next(855);
-			var y2 = _rnd.Next(855);
+			var render = new RenderTargetBitmap(2048, 855, 96, 96, PixelFormats.Pbgra32);
 
-			if (_textureImage.TryLock(new Duration(TimeSpan.FromMilliseconds(50))))
+			psPaintSurface.Measure(new Size(2048, 855));
+			psPaintSurface.UpdateLayout();
+
+			render.Render(psPaintSurface);
+
+			_textureImage.Lock();
+
+			var encoder = new PngBitmapEncoder();
+
+			encoder.Frames.Add(BitmapFrame.Create(render));
+			using (var stream = File.OpenWrite("test.png"))
+				encoder.Save(stream);
+
+			try
 			{
-				const int PixelColour = unchecked((int)0xFFFF0000);
-
-				unsafe
-				{
-					byte *backBuffer = (byte *)_textureImage.BackBuffer;
-
-					try
-					{
-						int w = _textureImage.PixelWidth;
-						int h = _textureImage.PixelHeight;
-						int stride = _textureImage.BackBufferStride;
-
-						int dx = Math.Abs(x2 - x1);
-						int dy = Math.Abs(y2 - y1);
-
-						if (dx > dy)
-						{
-							if (x1 > x2)
-							{
-								Swap(ref x1, ref x2);
-								Swap(ref y1, ref y2);
-							}
-
-							dy = y2 - y1;
-
-							for (int x = x1; x <= x2; x++)
-							{
-								int y = (x - x1) * dy / dx + y1;
-
-								if ((x >= 0) && (x < w) && (y >= 0) && (y < h))
-								{
-									int o = y * _textureImage.BackBufferStride + x * 4;
-
-									byte *pixelPointer = &backBuffer[o];
-
-									*(int *)pixelPointer = PixelColour;
-								}
-							}
-						}
-						else
-						{
-							if (y1 > y2)
-							{
-								Swap(ref x1, ref x2);
-								Swap(ref y1, ref y2);
-							}
-
-							dx = x2 - x1;
-
-							for (int y = y1; y <= y2; y++)
-							{
-								int x = (y - y1) * dx / dy + x1;
-
-								if ((x >= 0) && (x < w) && (y >= 0) && (y < h))
-								{
-									int o = y * _textureImage.BackBufferStride + x * 4;
-
-									byte *pixelPointer = &backBuffer[o];
-
-									*(int *)pixelPointer = PixelColour;
-								}
-							}
-						}
-					}
-					finally
-					{
-						_textureImage.AddDirtyRect(new Int32Rect(0, 0, _textureImage.PixelWidth, _textureImage.PixelHeight));
-						_textureImage.Unlock();
-					}
-				}
+				render.CopyPixels(
+					new Int32Rect(0, 0, 2048, 855),
+					_textureImage.BackBuffer,
+					_textureImage.BackBufferStride * _textureImage.PixelHeight,
+					_textureImage.BackBufferStride);
+			}
+			finally
+			{
+				_textureImage.AddDirtyRect(new Int32Rect(0, 0, 2048, 855));
+				_textureImage.Unlock();
 			}
 		}
 
-		static void Swap<T>(ref T a, ref T b)
+		void InitializeStamps()
 		{
-			T c = a;
-			a = b;
-			b = c;
+			string stampsFolder = "Stamps";
+
+			if (!Directory.Exists(stampsFolder))
+			{
+				stampsFolder = Path.Join(
+					Path.GetDirectoryName(typeof(MainWindow).Assembly.Location),
+					"Stamps");
+
+				while (!Directory.Exists(stampsFolder))
+				{
+					string? parentFolder = Path.GetDirectoryName(Path.GetDirectoryName(stampsFolder));
+
+					if (parentFolder == null)
+						return;
+
+					stampsFolder = Path.Join(parentFolder, "Stamps");
+				}
+			}
+
+			string[] stampCollectionFolders = Directory.GetDirectories(stampsFolder);
+
+			foreach (var stampCollectionFolder in stampCollectionFolders)
+			{
+				string collectionName = Path.GetFileName(stampCollectionFolder);
+
+				string nameFile = Path.Join(stampCollectionFolder, "Name");
+
+				if (File.Exists(nameFile))
+					collectionName = new StreamReader(nameFile).ReadLine()!;
+
+				var collection = new StampCollection(collectionName);
+
+				string[] files = Directory.GetFiles(stampCollectionFolder, "*.png", SearchOption.AllDirectories);
+
+				foreach (var file in files)
+				{
+					BitmapSource bitmap = new BitmapImage(new Uri(file));
+
+					string itemsFile = file + ".items";
+
+					if (!File.Exists(itemsFile))
+						collection.Stamps.Add(bitmap);
+					else
+					{
+						foreach (string item in File.ReadAllLines(itemsFile))
+						{
+							string[] parts = item.Split(',');
+
+							if (parts.Length != 4)
+								continue;
+
+							if (!int.TryParse(parts[0], out int x))
+								continue;
+							if (!int.TryParse(parts[1], out int y))
+								continue;
+							if (!int.TryParse(parts[2], out int w))
+								continue;
+							if (!int.TryParse(parts[3], out int h))
+								continue;
+
+							var croppedBitmap = new CroppedBitmap(
+								bitmap,
+								new Int32Rect(x, y, w, h));
+
+							collection.Stamps.Add(croppedBitmap);
+						}
+					}
+				}
+
+				_stampCollections.Add(collection);
+			}
 		}
 
-		ModelVisual3D _visual;
-		AxisAngleRotation3D _rotation;
+		List<StampCollection> _stampCollections = new List<StampCollection>();
+
+		Random _rnd = new Random();
+		WriteableBitmap? _textureImage;
+
+		ModelVisual3D? _visual;
+		AxisAngleRotation3D? _rotation;
 
 		bool _dragging = false;
 		Point _dragPosition;
@@ -208,6 +240,9 @@ namespace SubDesigner
 
 		private void v3dViewport_MouseDown(object sender, MouseButtonEventArgs e)
 		{
+			if (_rotation == null)
+				return;
+
 			_dragging = (e.LeftButton == MouseButtonState.Pressed);
 
 			var clickPosition = Mouse.GetPosition(v3dViewport);
@@ -231,28 +266,9 @@ namespace SubDesigner
 					mousePosition.X - v3dViewport.ActualWidth * 0.5,
 					mousePosition.Y - v3dViewport.ActualHeight * 0.5);
 
-				double dx = relativeMousePosition.X - _dragPosition.X;
-				double dy = relativeMousePosition.Y - _dragPosition.Y;
-
-				var angleDelta = dx;
+				var angleDelta = relativeMousePosition.X - _dragPosition.X;
 
 				_rotation.Angle = _dragStartAngle + angleDelta;
-
-				/*
-				double mouseAngle = Math.Atan2(dy, dx);
-
-				double axisAngle = mouseAngle + Math.PI / 2;
-
-				Vector3D axis = new Vector3D(Math.Cos(axisAngle) * 4, Math.Sin(axisAngle) * 4, 0);
-
-				double rotation = 0.01 * Math.Sqrt(Math.Pow(dx, 2) + Math.Pow(dy, 2));
-
-				var group = (Transform3DGroup)_visual.Transform;
-				QuaternionRotation3D r = new QuaternionRotation3D(new Quaternion(axis, rotation * 180 / Math.PI));
-				group.Children.Add(new RotateTransform3D(r));
-
-				_dragPosition = relativeMousePosition;
-				*/
 			}
 		}
 
@@ -260,6 +276,155 @@ namespace SubDesigner
 		{
 			_dragging = (e.LeftButton == MouseButtonState.Pressed);
 			v3dViewport.ReleaseMouseCapture();
+		}
+
+		private void cmdSelectCollection_Click(object sender, RoutedEventArgs e)
+		{
+			grdLayout.IsEnabled = false;
+
+			var collectionList = new ListBox();
+
+			ScrollViewer.SetHorizontalScrollBarVisibility(collectionList, ScrollBarVisibility.Hidden);
+
+			foreach (var collection in _stampCollections)
+			{
+				var preview = new StampCollectionPreview();
+
+				preview.LoadCollection(collection);
+				preview.HorizontalAlignment = HorizontalAlignment.Stretch;
+
+				collectionList.Items.Add(preview);
+			}
+
+			collectionList.HorizontalContentAlignment = HorizontalAlignment.Stretch;
+			collectionList.SelectionChanged +=
+				(_, _) =>
+				{
+					if (collectionList.SelectedItem is StampCollectionPreview selectedCollection)
+					{
+						grdTopLevel.Children.Remove(collectionList);
+						grdLayout.IsEnabled = true;
+
+						LoadStampCollection(selectedCollection.Collection!);
+					}
+				};
+
+			grdTopLevel.Children.Add(collectionList);
+		}
+
+		private void LoadStampCollection(StampCollection collection)
+		{
+			spStamps.Children.RemoveRange(1, spStamps.Children.Count - 1);
+
+			foreach (var stamp in collection.Stamps)
+			{
+				var spacer = new Control() { Width = 20 };
+
+				var image =
+					new Image()
+					{
+						Source = stamp,
+						VerticalAlignment = VerticalAlignment.Stretch,
+						StretchDirection = StretchDirection.DownOnly,
+					};
+
+				spStamps.Children.Add(spacer);
+				spStamps.Children.Add(image);
+
+				EnableDrag(image);
+			}
+		}
+
+		const double MugStartAngle = 70;
+		const double MugEndAngle = -235;
+
+		void EnableDrag(Image image)
+		{
+			Image? dragImage = null;
+
+			Vector clickOffset;
+
+			image.MouseDown +=
+				(sender, e) =>
+				{
+					var clickPosition = e.GetPosition(image);
+
+					clickOffset = new Vector(clickPosition.X, clickPosition.Y);
+
+					var dragCanvas = new Canvas();
+
+					grdTopLevel.Children.Add(dragCanvas);
+
+					dragImage = new Image();
+					dragImage.Source = image.Source;
+					dragImage.Width = image.ActualWidth;
+					dragImage.Height = image.ActualHeight;
+
+					void RepositionDragImage(Point mousePosition)
+					{
+						Canvas.SetLeft(dragImage, mousePosition.X - clickOffset.X);
+						Canvas.SetTop(dragImage, mousePosition.Y - clickOffset.Y);
+					}
+
+					RepositionDragImage(e.GetPosition(dragCanvas));
+
+					dragCanvas.Children.Add(dragImage);
+
+					dragCanvas.CaptureMouse();
+
+					dragCanvas.MouseMove +=
+						(_, e2) =>
+						{
+							RepositionDragImage(e2.GetPosition(dragCanvas));
+
+							var mousePosition = e2.GetPosition(psPaintSurface);
+
+							var topLeft = mousePosition - clickOffset;
+							var bottomRight = topLeft + new Vector(dragImage.ActualWidth, dragImage.ActualHeight);
+
+							bool offLeftEdge = bottomRight.X < 0;
+							bool offTopEdge = bottomRight.Y < 0;
+							bool offRightEdge = topLeft.X > psPaintSurface.ActualWidth;
+							bool offBottomEdge = topLeft.Y > psPaintSurface.ActualHeight;
+
+							if (!offLeftEdge && !offTopEdge && !offRightEdge && !offBottomEdge)
+							{
+								var centreX = (topLeft.X + bottomRight.X) * 0.5;
+
+								_rotation.Angle = MugStartAngle + centreX * (MugEndAngle - MugStartAngle) / 2048.0;
+							}
+						};
+
+					dragCanvas.MouseUp +=
+						(_, e2) =>
+						{
+							dragCanvas.ReleaseMouseCapture();
+
+							var mousePosition = e2.GetPosition(psPaintSurface);
+
+							var topLeft = mousePosition - clickOffset;
+							var bottomRight = topLeft + new Vector(dragImage.ActualWidth, dragImage.ActualHeight);
+
+							bool offLeftEdge = bottomRight.X < 0;
+							bool offTopEdge = bottomRight.Y < 0;
+							bool offRightEdge = topLeft.X > psPaintSurface.ActualWidth;
+							bool offBottomEdge = topLeft.Y > psPaintSurface.ActualHeight;
+
+							if (!offLeftEdge && !offTopEdge && !offRightEdge && !offBottomEdge)
+							{
+								psPaintSurface.AddStamp(topLeft, image.Source, dragImage.RenderSize);
+								UpdateMugPreview();
+							}
+
+							grdTopLevel.Children.Remove(dragCanvas);
+
+							if (dragImage != null)
+							{
+								grdLayout.Children.Remove(dragImage);
+								dragImage = null;
+							}
+						};
+				};
 		}
 	}
 }

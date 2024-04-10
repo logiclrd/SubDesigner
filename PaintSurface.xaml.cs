@@ -24,5 +24,27 @@ namespace SubDesigner
 		{
 			InitializeComponent();
 		}
+
+		public void AddStamp(Point location, ImageSource stampBitmap, Size initialSize)
+		{
+			location = new Point(
+				location.X * 2048 / this.ActualWidth,
+				location.Y * 855 / this.ActualHeight);
+
+			initialSize = new Size(
+				initialSize.Width * 2048 / this.ActualWidth,
+				initialSize.Height * 855 / this.ActualHeight);
+
+			var image = new Image();
+
+			image.Width = initialSize.Width;
+			image.Height = initialSize.Height;
+			image.Source = stampBitmap;
+
+			Canvas.SetLeft(image, location.X);
+			Canvas.SetTop(image, location.Y);
+
+			cnvContents.Children.Add(image);
+		}
 	}
 }
