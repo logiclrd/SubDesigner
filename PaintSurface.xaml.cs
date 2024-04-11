@@ -49,6 +49,8 @@ namespace SubDesigner
 			set => SetValue(HasSelectionProperty, value);
 		}
 
+		bool _pauseChangeEvents = false;
+
 		public event EventHandler<UIElement>? Open;
 		public event EventHandler<UIElement?>? ChangeMade;
 
@@ -59,7 +61,8 @@ namespace SubDesigner
 
 		protected virtual void OnChangeMade(UIElement? changedItem)
 		{
-			ChangeMade?.Invoke(this, changedItem);
+			if (!_pauseChangeEvents)
+				ChangeMade?.Invoke(this, changedItem);
 		}
 
 		ElementManipulator? _manipulator;
@@ -124,7 +127,7 @@ namespace SubDesigner
 			return textHost;
 		}
 
-		private void AddText(Point location, TextHost text, Size size)
+		private void AddText(Point location, TextHost text, Size size, double angle = 0)
 		{
 			text.Width = size.Width;
 			text.Height = size.Height;
@@ -132,14 +135,20 @@ namespace SubDesigner
 			Canvas.SetLeft(text, location.X);
 			Canvas.SetTop(text, location.Y);
 
-			text.RenderTransform = new RotateTransform() { CenterX = size.Width * 0.5, CenterY = size.Height * 0.5 };
+			text.RenderTransform =
+				new RotateTransform()
+				{
+					Angle = angle,
+					CenterX = size.Width * 0.5,
+					CenterY = size.Height * 0.5
+				};
 
 			cnvContents.Children.Add(text);
 
 			text.MouseDown += element_MouseDown;
 		}
 
-		public void AddStamp(Point location, ImageSource stampBitmap, string stampDescriptor, Size initialSize)
+		public void AddStamp(Point location, ImageSource stampBitmap, string stampDescriptor, Size initialSize, double angle = 0)
 		{
 			var stamp = new Image();
 
@@ -152,7 +161,13 @@ namespace SubDesigner
 			Canvas.SetLeft(stamp, location.X);
 			Canvas.SetTop(stamp, location.Y);
 
-			stamp.RenderTransform = new RotateTransform() { CenterX = initialSize.Width * 0.5, CenterY = initialSize.Height * 0.5 };
+			stamp.RenderTransform =
+				new RotateTransform()
+				{
+					Angle = angle,
+					CenterX = initialSize.Width * 0.5,
+					CenterY = initialSize.Height * 0.5
+				};
 
 			cnvContents.Children.Add(stamp);
 
@@ -201,15 +216,109 @@ namespace SubDesigner
 		{
 			var design = new MugDesign();
 
-			foreach (var element in cnvContents.Children)
+			foreach (var element in cnvContents.Children.OfType<FrameworkElement>())
 			{
+				MugDesignElement serializedElement;
+
 				if ((element is Image image) && (image.Tag is string stampDescriptor))
-					design.Elements.Add(new MugDesignStamp(stampDescriptor));
+					serializedElement = new MugDesignStamp(stampDescriptor);
 				else if ((element is TextHost textHost) && (textHost.Text is Text text))
-					design.Elements.Add(new MugDesignText(text));
+					serializedElement = new MugDesignText(text);
+				else
+					continue;
+
+				serializedElement.X = Canvas.GetLeft(element);
+				serializedElement.Y = Canvas.GetTop(element);
+
+				serializedElement.Width = element.Width;
+				serializedElement.Height = element.Height;
+
+				if (element.RenderTransform is RotateTransform rotateTransform)
+					serializedElement.Angle = rotateTransform.Angle;
+
+				design.Elements.Add(serializedElement);
 			}
 
 			return design;
+		}
+
+		public void Deserialize(MugDesign design, IEnumerable<StampCollection> loadedStamps)
+		{
+			var stampByDescriptor = loadedStamps
+				.SelectMany(collection => collection.Stamps)
+				.ToDictionary(stamp => stamp.Descriptor!, stamp => stamp);
+
+			_pauseChangeEvents = true;
+
+			try
+			{
+				cnvContents.Children.Clear();
+
+				foreach (var element in design.Elements)
+				{
+					if (element is MugDesignStamp stamp)
+					{
+						if (!stampByDescriptor.TryGetValue(stamp.Descriptor, out var loadedStamp))
+						{
+							BitmapSource bitmap;
+
+							if (!stamp.Descriptor.Contains("::"))
+							{
+								bitmap = new BitmapImage(new Uri(stamp.Descriptor));
+
+							}
+							else
+							{
+								string[] parts = stamp.Descriptor.Split("::");
+
+								if (parts.Length != 2)
+									continue;
+
+								string[] crop = parts[0].Split(":");
+								string fileName = parts[1];
+
+								if (crop.Length != 4)
+									continue;
+
+								BitmapSource fullBitmap = new BitmapImage(new Uri(fileName));
+
+								if (!int.TryParse(crop[0], out int x))
+									continue;
+								if (!int.TryParse(crop[1], out int y))
+									continue;
+								if (!int.TryParse(crop[2], out int w))
+									continue;
+								if (!int.TryParse(crop[3], out int h))
+									continue;
+
+								bitmap = new CroppedBitmap(
+									fullBitmap,
+									new Int32Rect(x, y, w, h));
+							}
+
+							loadedStamp = new Stamp();
+
+							loadedStamp.BitmapSource = bitmap;
+							loadedStamp.Descriptor = stamp.Descriptor;
+						}
+
+						AddStamp(
+							new Point(element.X, element.Y),
+							loadedStamp.BitmapSource!,
+							loadedStamp.Descriptor!,
+							new Size(element.Width, element.Height),
+							element.Angle);
+					}
+
+					if (element is MugDesignText)
+					{
+					}
+				}
+			}
+			finally
+			{
+				_pauseChangeEvents = false;
+			}
 		}
 	}
 }

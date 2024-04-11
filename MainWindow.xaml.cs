@@ -14,6 +14,8 @@ using System.Xml.Serialization;
 
 using HelixToolkit.Wpf;
 
+using Microsoft.Win32;
+
 namespace SubDesigner
 {
 	/// <summary>
@@ -382,7 +384,7 @@ namespace SubDesigner
 
 		private void LoadStampCollection(StampCollection collection)
 		{
-			spStamps.Children.RemoveRange(2, spStamps.Children.Count - 2);
+			spStamps.Children.Clear();
 
 			foreach (var stamp in collection.Stamps)
 			{
@@ -589,6 +591,52 @@ namespace SubDesigner
 			_mugIndex++;
 			rMugNumber.Text = _mugIndex.ToString();
 			psPaintSurface.ClearItems();
+		}
+
+		private void tbMugDesignNumber_MouseDown(object sender, MouseButtonEventArgs e)
+		{
+			if (Keyboard.Modifiers.HasFlag(ModifierKeys.Shift))
+			{
+				var ofdDialog = new OpenFileDialog();
+
+				ofdDialog.InitialDirectory = MugDesignsFolder;
+				ofdDialog.Filter = "Mug Designs (*.mug.xml)|*.mug.xml";
+				ofdDialog.Multiselect = false;
+				ofdDialog.Title = "Select Saved Mug Design";
+				ofdDialog.DefaultExt = ".mug.xml";
+
+				bool? result = ofdDialog.ShowDialog();
+
+				if (result ?? false)
+				{
+					MugDesign design;
+
+					try
+					{
+						using (var stream = File.OpenRead(ofdDialog.FileName))
+							design = (MugDesign)_mugSerializer.Deserialize(stream!)!;
+					}
+					catch (Exception ex)
+					{
+						MessageBox.Show("Couldn't load the mug design. The file might be corrupt.\n\n" + ex.GetType().Name + ": " + ex.Message, "Error Loading Mug Design", MessageBoxButton.OK, MessageBoxImage.Error);
+
+						return;
+					}
+
+					try
+					{
+						psPaintSurface.Deserialize(design!, _stampCollections);
+					}
+					catch (Exception ex)
+					{
+						MessageBox.Show("Couldn't load the mug design. The Paint Surface encountered an error processing the design.\n\n" + ex.GetType().Name + ": " + ex.Message, "Error Loading Mug Design", MessageBoxButton.OK, MessageBoxImage.Error);
+
+						return;
+					}
+
+					UpdateMugPreview();
+				}
+			}
 		}
 	}
 }

@@ -22,7 +22,7 @@
                 <Viewport3D Name="v3dViewport" Grid.Column="1" MouseDown="StartMugDrag" MouseMove="DoMugDrag" MouseUp="EndMugDrag" MinWidth="100" />
             </DockPanel>
             <Rectangle Fill="#EEE" Grid.Column="0" Grid.Row="0" />
-            <TextBlock FontSize="30" FontFamily="Anxiety Management" Margin="8" HorizontalAlignment="Right">
+            <TextBlock Name="tbMugDesignNumber" FontSize="30" FontFamily="Anxiety Management" Margin="8" HorizontalAlignment="Right" MouseDown="tbMugDesignNumber_MouseDown">
                         <Run FontFamily="Anxiety Management">Mug design number</Run>
                         <Run FontFamily="Arial">: </Run>
                         <Run FontFamily="Anxiety Management" Name="rMugNumber" />
@@ -36,19 +36,21 @@
                     <local:PaintSurface Background="White" x:Name="psPaintSurface" Width="2048" Height="855" Margin="10" MouseDown="StartMugDrag" MouseMove="DoMugDrag" MouseUp="EndMugDrag" Open="psPaintSurface_Open" ChangeMade="psPaintSurface_ChangeMade" />
                 </Viewbox>
             </DockPanel>
-            <ScrollViewer Grid.Row="1" Grid.ColumnSpan="2" VerticalScrollBarVisibility="Disabled" HorizontalScrollBarVisibility="Visible">
-                <StackPanel Orientation="Horizontal" Name="spStamps">
-                    <Button Name="cmdAddText" Width="100" Margin="8 4" BorderThickness="0" Background="White" Click="cmdAddText_Click">
-                        <TextBlock FontSize="80" FontFamily="Times New Roman">Tt</TextBlock>
-                    </Button>
+            <DockPanel Grid.Row="1" Grid.ColumnSpan="2">
+                <Button Name="cmdAddText" DockPanel.Dock="Left" Width="100" Margin="8 4" BorderThickness="0" Background="White" Click="cmdAddText_Click">
+                    <TextBlock FontSize="80" FontFamily="Times New Roman">Tt</TextBlock>
+                </Button>
 
-                    <Button Name="cmdSelectCollection" Click="cmdSelectCollection_Click" BorderThickness="0" Background="White">
-                        <local:StampCollectionButton />
-                    </Button>
-                    
-                    <local:FindStampsHereHint />
-                </StackPanel>
-            </ScrollViewer>
+                <Button Name="cmdSelectCollection" DockPanel.Dock="Left" Click="cmdSelectCollection_Click" BorderThickness="0" Background="White">
+                    <local:StampCollectionButton />
+                </Button>
+                
+                <ScrollViewer VerticalScrollBarVisibility="Disabled" HorizontalScrollBarVisibility="Visible">
+                    <StackPanel Orientation="Horizontal" Name="spStamps">
+                        <local:FindStampsHereHint />
+                    </StackPanel>
+                </ScrollViewer>
+            </DockPanel>
         </Grid>
     </Grid>
 </Window>
