@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Windows.Media.Imaging;
 
 namespace SubDesigner
 {
@@ -11,6 +10,6 @@ namespace SubDesigner
 		}
 
 		public string Name;
-		public List<BitmapSource> Stamps = new List<BitmapSource>();
+		public List<Stamp> Stamps = new List<Stamp>();
 	}
 }

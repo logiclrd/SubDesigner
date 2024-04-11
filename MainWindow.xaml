@@ -15,10 +15,20 @@
                 <RowDefinition Height="4*" />
                 <RowDefinition Height="1*" />
             </Grid.RowDefinitions>
-            <Viewport3D Name="v3dViewport" Grid.Column="1" MouseDown="StartMugDrag" MouseMove="DoMugDrag" MouseUp="EndMugDrag" />
+            <DockPanel Grid.Column="1" LastChildFill="True">
+                <Button Name="cmdPrintIt" DockPanel.Dock="Top" Content="Print It" FontFamily="Anxiety Management" FontSize="60" Click="cmdPrintIt_Click" />
+                <Button Name="cmdNewMug" DockPanel.Dock="Top" Content="Start Fresh" FontFamily="Anxiety Management" FontSize="60" Click="cmdNewMug_Click" Margin="0 12" />
+                
+                <Viewport3D Name="v3dViewport" Grid.Column="1" MouseDown="StartMugDrag" MouseMove="DoMugDrag" MouseUp="EndMugDrag" MinWidth="100" />
+            </DockPanel>
             <Rectangle Fill="#EEE" Grid.Column="0" Grid.Row="0" />
+            <TextBlock FontSize="30" FontFamily="Anxiety Management" Margin="8" HorizontalAlignment="Right">
+                        <Run FontFamily="Anxiety Management">Mug design number</Run>
+                        <Run FontFamily="Arial">: </Run>
+                        <Run FontFamily="Anxiety Management" Name="rMugNumber" />
+            </TextBlock>
             <DockPanel LastChildFill="True" VerticalAlignment="Center">
-                <TextBlock DockPanel.Dock="Top" FontSize="80" FontFamily="Anxiety Management" VerticalAlignment="Bottom" Margin="8">
+                <TextBlock FontSize="80" FontFamily="Anxiety Management" Margin="8" DockPanel.Dock="Top">
                     <Run FontFamily="Anxiety Management">Design your mug here</Run>
                     <Run FontFamily="Arial">:</Run>
                 </TextBlock>

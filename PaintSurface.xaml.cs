@@ -50,14 +50,14 @@ namespace SubDesigner
 		}
 
 		public event EventHandler<UIElement>? Open;
-		public event EventHandler<UIElement>? ChangeMade;
+		public event EventHandler<UIElement?>? ChangeMade;
 
 		protected virtual void OnOpen(UIElement selectedItem)
 		{
 			Open?.Invoke(this, selectedItem);
 		}
 
-		protected virtual void OnChangeMade(UIElement changedItem)
+		protected virtual void OnChangeMade(UIElement? changedItem)
 		{
 			ChangeMade?.Invoke(this, changedItem);
 		}
@@ -139,9 +139,11 @@ namespace SubDesigner
 			text.MouseDown += element_MouseDown;
 		}
 
-		public void AddStamp(Point location, ImageSource stampBitmap, Size initialSize)
+		public void AddStamp(Point location, ImageSource stampBitmap, string stampDescriptor, Size initialSize)
 		{
 			var stamp = new Image();
+
+			stamp.Tag = stampDescriptor;
 
 			stamp.Width = initialSize.Width;
 			stamp.Height = initialSize.Height;
@@ -155,6 +157,13 @@ namespace SubDesigner
 			cnvContents.Children.Add(stamp);
 
 			stamp.MouseDown += element_MouseDown;
+		}
+
+		public void ClearItems()
+		{
+			ClearSelection();
+			cnvContents.Children.Clear();
+			OnChangeMade(null);
 		}
 
 		public void DeleteItem(UIElement element)
@@ -186,6 +195,21 @@ namespace SubDesigner
 			_manipulator.ChangeMade += manipulator_ChangeMade;
 			_manipulator.Delete += manipulator_Delete;
 			_manipulator.LostFocus += manipulator_LostFocus;
+		}
+
+		public MugDesign Serialize()
+		{
+			var design = new MugDesign();
+
+			foreach (var element in cnvContents.Children)
+			{
+				if ((element is Image image) && (image.Tag is string stampDescriptor))
+					design.Elements.Add(new MugDesignStamp(stampDescriptor));
+				else if ((element is TextHost textHost) && (textHost.Text is Text text))
+					design.Elements.Add(new MugDesignText(text));
+			}
+
+			return design;
 		}
 	}
 }

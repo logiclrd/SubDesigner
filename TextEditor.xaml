@@ -22,7 +22,7 @@
             <Button Content="Cancel" FontSize="30" Padding="10" Name="cmdCancel" Click="cmdCancel_Click" />
         </StackPanel>
         
-        <TextBox Name="txtText" Text="My Mug" Grid.Row="1" FontSize="40" TextChanged="txtText_TextChanged" />
+        <TextBox Name="txtText" Text="Ai-Kon 2024" Grid.Row="1" FontSize="40" TextChanged="txtText_TextChanged" TextWrapping="Wrap" />
 
         <Grid Grid.Column="1" Grid.Row="1">
             <Grid.ColumnDefinitions>

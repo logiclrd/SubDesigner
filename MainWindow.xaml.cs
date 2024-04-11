@@ -10,6 +10,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Media.Media3D;
 using System.Windows.Threading;
+using System.Xml.Serialization;
 
 using HelixToolkit.Wpf;
 
@@ -20,6 +21,8 @@ namespace SubDesigner
 	/// </summary>
 	public partial class MainWindow : Window
 	{
+		const string MugDesignsFolder = @"C:\MugDesigns";
+
 		public MainWindow()
 		{
 			InitializeComponent();
@@ -30,12 +33,26 @@ namespace SubDesigner
 			InitializeModel();
 			InitializeStamps();
 
-			psPaintSurface.ChangeMade += (_, _) => UpdateMugPreview();
-
 			var hasSelectionDescriptor = DependencyPropertyDescriptor.FromProperty(PaintSurface.HasSelectionProperty, typeof(PaintSurface));
 
 			hasSelectionDescriptor.AddValueChanged(psPaintSurface, (_, _) => UpdateMugPreview());
+
+			int parsedIndex = -1;
+
+			Directory.CreateDirectory(MugDesignsFolder);
+
+			_mugIndex = 1 + Directory.GetFiles(MugDesignsFolder, "*.mug.xml")
+				.Select(path => Path.GetFileNameWithoutExtension(path))
+				.Select(path => Path.GetFileNameWithoutExtension(path))
+				.Where(name => int.TryParse(name, out parsedIndex))
+				.Select(name => parsedIndex)
+				.DefaultIfEmpty(-1)
+				.Max();
+
+			rMugNumber.Text = _mugIndex.ToString();
 		}
+
+		int _mugIndex;
 
 		void InitializeModel()
 		{
@@ -123,6 +140,8 @@ namespace SubDesigner
 			return null;
 		}
 
+		XmlSerializer _mugSerializer = new XmlSerializer(typeof(MugDesign));
+
 		void UpdateMugPreview()
 		{
 			if (_textureImage == null)
@@ -137,11 +156,33 @@ namespace SubDesigner
 
 			_textureImage.Lock();
 
-			var encoder = new PngBitmapEncoder();
+			try
+			{
+				var encoder = new PngBitmapEncoder();
 
-			encoder.Frames.Add(BitmapFrame.Create(render));
-			using (var stream = File.OpenWrite("test.png"))
-				encoder.Save(stream);
+				encoder.Frames.Add(BitmapFrame.Create(render));
+				using (var stream = File.OpenWrite(Path.Combine(MugDesignsFolder, _mugIndex + ".png")))
+					encoder.Save(stream);
+			}
+			catch { }
+
+			var mugElements = psPaintSurface.Serialize();
+
+			string mugFileName = Path.Combine(MugDesignsFolder, _mugIndex + ".mug.xml");
+
+			if (File.Exists(mugFileName))
+			{
+				string backupMugFileName = Path.GetFileNameWithoutExtension(mugFileName) + "_backup.mug.xml";
+
+				try
+				{
+					File.Move(mugFileName, backupMugFileName, overwrite: true);
+				}
+				catch { }
+			}
+
+			using (var stream = File.OpenWrite(mugFileName))
+				_mugSerializer.Serialize(stream, mugElements);
 
 			try
 			{
@@ -201,7 +242,14 @@ namespace SubDesigner
 					string itemsFile = file + ".items";
 
 					if (!File.Exists(itemsFile))
-						collection.Stamps.Add(bitmap);
+					{
+						var stamp = new Stamp();
+
+						stamp.BitmapSource = bitmap;
+						stamp.Descriptor = file;
+
+						collection.Stamps.Add(stamp);
+					}
 					else
 					{
 						foreach (string item in File.ReadAllLines(itemsFile))
@@ -224,7 +272,12 @@ namespace SubDesigner
 								bitmap,
 								new Int32Rect(x, y, w, h));
 
-							collection.Stamps.Add(croppedBitmap);
+							var stamp = new Stamp();
+
+							stamp.BitmapSource = croppedBitmap;
+							stamp.Descriptor = $"{x}:{y}:{w}:{h}::{file}";
+
+							collection.Stamps.Add(stamp);
 						}
 					}
 				}
@@ -338,7 +391,8 @@ namespace SubDesigner
 				var image =
 					new Image()
 					{
-						Source = stamp,
+						Source = stamp.BitmapSource,
+						Tag = stamp.Descriptor,
 						VerticalAlignment = VerticalAlignment.Stretch,
 						StretchDirection = StretchDirection.DownOnly,
 					};
@@ -429,7 +483,7 @@ namespace SubDesigner
 
 							if (!offLeftEdge && !offTopEdge && !offRightEdge && !offBottomEdge)
 							{
-								psPaintSurface.AddStamp(topLeft, image.Source, (Size)(bottomRight - topLeft));
+								psPaintSurface.AddStamp(topLeft, image.Source, (string)image.Tag, (Size)(bottomRight - topLeft));
 								UpdateMugPreview();
 							}
 
@@ -474,6 +528,8 @@ namespace SubDesigner
 						newTextHost.Width = textHost.Width;
 						newTextHost.Height = textHost.Height;
 						newTextHost.RenderTransform = textHost.RenderTransform;
+
+						UpdateMugPreview();
 					};
 
 				textEditor.Close +=
@@ -485,11 +541,16 @@ namespace SubDesigner
 			}
 		}
 
-		private void psPaintSurface_ChangeMade(object sender, UIElement e)
+		private void psPaintSurface_ChangeMade(object sender, UIElement? e)
 		{
-			var centreX = Canvas.GetLeft(e) + e.RenderSize.Width * 0.5;
+			if (e is UIElement item)
+			{
+				var centreX = Canvas.GetLeft(item) + item.RenderSize.Width * 0.5;
 
-			_rotation.Angle = MugStartAngle + centreX * (MugEndAngle - MugStartAngle) / 2048.0;
+				_rotation.Angle = MugStartAngle + centreX * (MugEndAngle - MugStartAngle) / 2048.0;
+			}
+
+			UpdateMugPreview();
 		}
 
 		private void cmdAddText_Click(object sender, RoutedEventArgs e)
@@ -516,6 +577,18 @@ namespace SubDesigner
 					grdTopLevel.Children.Remove(textEditor);
 					grdLayout.IsEnabled = true;
 				};
+		}
+
+		private void cmdPrintIt_Click(object sender, RoutedEventArgs e)
+		{
+
+		}
+
+		private void cmdNewMug_Click(object sender, RoutedEventArgs e)
+		{
+			_mugIndex++;
+			rMugNumber.Text = _mugIndex.ToString();
+			psPaintSurface.ClearItems();
 		}
 	}
 }
