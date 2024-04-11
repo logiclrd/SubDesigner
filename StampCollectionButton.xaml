@@ -3,26 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              Width="100"
              Height="80">
-    <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="Auto" />
-            <ColumnDefinition Width="*" />
-        </Grid.ColumnDefinitions>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="*" />
-            <RowDefinition Height="*" />
-            <RowDefinition Height="*" />
-            <RowDefinition Height="*" />
-        </Grid.RowDefinitions>
-
-        <Ellipse Grid.Row="0" Grid.Column="0" Width="15" Height="15" Fill="Black" />
-        <Ellipse Grid.Row="1" Grid.Column="0" Width="15" Height="15" Fill="Black" />
-        <Ellipse Grid.Row="2" Grid.Column="0" Width="15" Height="15" Fill="Black" />
-        <Ellipse Grid.Row="3" Grid.Column="0" Width="15" Height="15" Fill="Black" />
-
-        <Rectangle Grid.Row="0" Grid.Column="1" Margin="6" Height="8" RadiusX="4" RadiusY="4" Fill="Black" />
-        <Rectangle Grid.Row="1" Grid.Column="1" Margin="6" Height="8" RadiusX="4" RadiusY="4" Fill="Black" />
-        <Rectangle Grid.Row="2" Grid.Column="1" Margin="6" Height="8" RadiusX="4" RadiusY="4" Fill="Black" />
-        <Rectangle Grid.Row="3" Grid.Column="1" Margin="6" Height="8" RadiusX="4" RadiusY="4" Fill="Black" />
-    </Grid>
+    <Viewbox>
+        <Path Data="M917.333333 681.237333h-206.784c-140.138667-97.557333-75.733333-239.637333-23.872-354.090666C708.288 279.488 725.333333 241.856 725.333333 211.904 725.333333 72.789333 617.984 0 511.936 0 405.952 0 298.666667 72.789333 298.666667 211.904c0 30.101333 17.130667 67.797333 38.805333 115.52 51.925333 114.24 116.394667 256.064-24.042667 353.813333H106.666667c-58.816 0-106.666667 47.850667-106.666667 106.666667v128a21.333333 21.333333 0 0 0 21.333333 21.333333h21.333334v64a21.333333 21.333333 0 0 0 21.333333 21.333334h896a21.333333 21.333333 0 0 0 21.333333-21.333334v-64h21.333334a21.333333 21.333333 0 0 0 21.333333-21.333333v-128c0-58.816-47.850667-106.666667-106.666667-106.666667z m21.333334 298.666667H85.333333v-42.666667h853.333334v42.666667z m42.666666-85.333333H42.666667v-106.666667c0-35.285333 28.714667-64 64-64h213.354666a21.290667 21.290667 0 0 0 11.797334-3.562667c177.514667-117.973333 97.472-294.058667 44.522666-410.581333C358.336 270.186667 341.333333 232.768 341.333333 211.904 341.333333 95.616 429.76 42.666667 511.936 42.666667 594.176 42.666667 682.666667 95.616 682.666667 211.904c0 20.757333-16.938667 58.090667-34.837334 97.621333-52.885333 116.714667-132.821333 293.098667 44.373334 410.816a21.290667 21.290667 0 0 0 11.797333 3.562667h213.333333c35.285333 0 64 28.714667 64 64v106.666667z" Fill="#231F20" />
+    </Viewbox>
 </UserControl>

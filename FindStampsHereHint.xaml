@@ -1,0 +1,19 @@
+﻿<UserControl x:Class="SubDesigner.FindStampsHereHint"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" >
+    <StackPanel Orientation="Horizontal">
+        <Viewbox Height="100">
+            <Path Fill="Black" Data="M390 9174 c-192 -22 -269 -46 -322 -101 -40 -41 -68 -106 -68 -158 0 -45 34 -152 79 -250 352 -759 2514 -3745 3690 -5095 201 -231 450 -476 544 -535 71 -45 81 -48 134 -46 71 3 100 14 141 54 72 68 93 143 152 520 23 144 50 308 61 363 20 106 83 345 97 370 6 11 44 -10 173 -97 579 -394 1306 -930 2949 -2175 1958 -1485 2445 -1840 2708 -1974 141 -72 253 -62 336 31 81 89 109 189 191 677 111 662 188 947 334 1242 158 318 323 528 772 987 362 370 427 458 437 593 9 124 -46 201 -219 307 -323 197 -835 441 -3274 1563 -1468 675 -2356 1099 -2950 1410 -209 110 -195 95 -155 166 53 95 180 278 306 439 284 366 334 441 354 529 23 103 -25 203 -125 261 -259 152 -1125 340 -2622 570 -950 145 -2148 282 -2943 335 -164 11 -721 21 -780 14z">
+                <Path.LayoutTransform>
+                    <TransformGroup>
+                        <RotateTransform Angle="30" />
+                        <ScaleTransform ScaleX="1.5" />
+                    </TransformGroup>
+                </Path.LayoutTransform>
+            </Path>
+        </Viewbox>
+
+        <TextBlock VerticalAlignment="Center" FontSize="40" FontFamily="Anxiety Management">Find stamps here</TextBlock>
+    </StackPanel>
+</UserControl>

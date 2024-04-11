@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
 
 namespace SubDesigner
 {
@@ -25,11 +26,24 @@ namespace SubDesigner
 			SizeChanged += manipulator_SizeChanged;
 		}
 
-		public event EventHandler<UIElement> ChangeMade;
+		public event EventHandler<UIElement>? Open;
+		public event EventHandler<UIElement>? ChangeMade;
+		public event EventHandler? Delete;
 
-		protected virtual void OnChangeMade(UIElement changedItem)
+		protected virtual void OnOpen(UIElement? selectedItem)
 		{
-			ChangeMade?.Invoke(this, changedItem);
+			if (selectedItem != null)
+				Open?.Invoke(this, selectedItem);
+		}
+
+		protected virtual void OnChangeMade(UIElement? changedItem)
+		{
+			ChangeMade?.Invoke(this, changedItem!);
+		}
+
+		protected virtual void OnDelete()
+		{
+			Delete?.Invoke(this, EventArgs.Empty);
 		}
 
 		private void manipulator_PositionChanged(object? sender, EventArgs e)
@@ -47,6 +61,12 @@ namespace SubDesigner
 			{
 				Wrapped.Width = this.ActualWidth - 2 * BorderSize;
 				Wrapped.Height = this.ActualHeight - 2 * BorderSize;
+
+				if (Wrapped.RenderTransform is RotateTransform rotateTransform)
+				{
+					rotateTransform.CenterX = Wrapped.Width * 0.5;
+					rotateTransform.CenterY = Wrapped.Height * 0.5;
+				}
 			}
 		}
 
@@ -64,6 +84,8 @@ namespace SubDesigner
 
 			this.Width = toWrap.ActualWidth + 2 * BorderSize;
 			this.Height = toWrap.ActualHeight + 2 * BorderSize;
+
+			this.RenderTransform = toWrap.RenderTransform;
 
 			Wrapped = toWrap;
 		}
@@ -162,32 +184,49 @@ namespace SubDesigner
 
 		bool _moving;
 		Point _moveDragStart;
+		Point _movePositionAtStart;
+		DateTime _lastMoveStarted;
+
+		static readonly TimeSpan MinimumMoveTime = TimeSpan.FromSeconds(0.25);
+		static readonly TimeSpan DoubleClickThresholdTime = TimeSpan.FromSeconds(0.3);
 
 		private void StartMove(object sender, MouseButtonEventArgs e)
 		{
-			if ((e.ChangedButton == MouseButton.Left) && (sender == ElementArea))
+			if ((e.ChangedButton == MouseButton.Left) && (sender == ElementArea) && (Parent is UIElement parentElement))
 			{
-				ElementArea.CaptureMouse();
+				var timeElapsed = DateTime.UtcNow - _lastMoveStarted;
 
-				_moving = true;
+				if (timeElapsed < DoubleClickThresholdTime)
+					OnOpen(Wrapped);
+				else
+				{
+					ElementArea.CaptureMouse();
+
+					_moving = true;
+
+					_lastMoveStarted = DateTime.UtcNow;
+
+					_moveDragStart = e.GetPosition(parentElement);
+					_movePositionAtStart = new Point(
+						Canvas.GetLeft(this),
+						Canvas.GetTop(this));
+				}
 
 				e.Handled = true;
-
-				_moveDragStart = e.GetPosition(ElementArea);
 			}
 		}
 
 		private void DoMove(object sender, MouseEventArgs e)
 		{
-			if (_moving)
+			if (_moving && (Parent is UIElement parentElement))
 			{
-				var mousePosition = e.GetPosition(ElementArea);
+				var mousePosition = e.GetPosition(parentElement);
 
 				double dx = mousePosition.X - _moveDragStart.X;
 				double dy = mousePosition.Y - _moveDragStart.Y;
 
-				Canvas.SetLeft(this, Canvas.GetLeft(this) + dx);
-				Canvas.SetTop(this, Canvas.GetTop(this) + dy);
+				Canvas.SetLeft(this, _movePositionAtStart.X + dx);
+				Canvas.SetTop(this, _movePositionAtStart.Y + dy);
 
 				OnChangeMade(Wrapped);
 			}
@@ -197,9 +236,70 @@ namespace SubDesigner
 		{
 			if (_moving && (e.ChangedButton == MouseButton.Left))
 			{
+				var timeElapsed = DateTime.UtcNow - _lastMoveStarted;
+
+				if (timeElapsed < MinimumMoveTime)
+				{
+					// Undo accidental moves
+					Canvas.SetLeft(this, _movePositionAtStart.X);
+					Canvas.SetTop(this, _movePositionAtStart.Y);
+				}
+
 				ElementArea.ReleaseMouseCapture();
 				_moving = false;
 			}
+		}
+
+		bool _rotating;
+		double _rotateStartAngle;
+		double _rotateStartX;
+
+		private void StartRotate(object sender, MouseButtonEventArgs e)
+		{
+			if ((e.ChangedButton == MouseButton.Left) && (sender == pRotateWidget) && (Parent is UIElement parentElement))
+			{
+				pRotateWidget.CaptureMouse();
+
+				_rotating = true;
+
+				e.Handled = true;
+
+				var clickPoint = Mouse.GetPosition(parentElement);
+
+				_rotateStartX = clickPoint.X;
+
+				if (this.RenderTransform is RotateTransform rotateTransform)
+					_rotateStartAngle = rotateTransform.Angle;
+			}
+		}
+
+		private void DoRotate(object sender, MouseEventArgs e)
+		{
+			if (_rotating && (Parent is UIElement parentElement))
+			{
+				var mousePosition = Mouse.GetPosition(parentElement);
+
+				double da = mousePosition.X - _rotateStartX;
+
+				if (this.RenderTransform is RotateTransform rotateTransform)
+					rotateTransform.Angle = _rotateStartAngle + da;
+
+				OnChangeMade(Wrapped);
+			}
+		}
+
+		private void EndRotate(object sender, MouseButtonEventArgs e)
+		{
+			if (_rotating && (e.ChangedButton == MouseButton.Left))
+			{
+				pRotateWidget.ReleaseMouseCapture();
+				_rotating = false;
+			}
+		}
+
+		private void cmdDelete_Click(object sender, RoutedEventArgs e)
+		{
+			OnDelete();
 		}
 	}
 }

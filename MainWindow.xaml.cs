@@ -329,7 +329,7 @@ namespace SubDesigner
 
 		private void LoadStampCollection(StampCollection collection)
 		{
-			spStamps.Children.RemoveRange(1, spStamps.Children.Count - 1);
+			spStamps.Children.RemoveRange(2, spStamps.Children.Count - 2);
 
 			foreach (var stamp in collection.Stamps)
 			{
@@ -444,11 +444,78 @@ namespace SubDesigner
 				};
 		}
 
+		private void psPaintSurface_Open(object sender, UIElement e)
+		{
+			if ((e is TextHost textHost) && (textHost.Text is Text text))
+			{
+				var position = new Point(
+					Canvas.GetLeft(e),
+					Canvas.GetTop(e));
+
+				var textEditor = new TextEditor();
+
+				textEditor.AddButtonText = "Update Text";
+
+				textEditor.HorizontalAlignment = HorizontalAlignment.Stretch;
+				textEditor.VerticalAlignment = VerticalAlignment.Stretch;
+
+				textEditor.LoadText(text);
+
+				grdTopLevel.Children.Add(textEditor);
+				grdLayout.IsEnabled = false;
+
+				textEditor.AddText +=
+					(_, newText) =>
+					{
+						psPaintSurface.DeleteItem(textHost);
+
+						var newTextHost = psPaintSurface.AddText(position, newText);
+
+						newTextHost.Width = textHost.Width;
+						newTextHost.Height = textHost.Height;
+						newTextHost.RenderTransform = textHost.RenderTransform;
+					};
+
+				textEditor.Close +=
+					(_, _) =>
+					{
+						grdTopLevel.Children.Remove(textEditor);
+						grdLayout.IsEnabled = true;
+					};
+			}
+		}
+
 		private void psPaintSurface_ChangeMade(object sender, UIElement e)
 		{
 			var centreX = Canvas.GetLeft(e) + e.RenderSize.Width * 0.5;
 
 			_rotation.Angle = MugStartAngle + centreX * (MugEndAngle - MugStartAngle) / 2048.0;
+		}
+
+		private void cmdAddText_Click(object sender, RoutedEventArgs e)
+		{
+			grdLayout.IsEnabled = false;
+
+			var textEditor = new TextEditor();
+
+			textEditor.HorizontalAlignment = HorizontalAlignment.Stretch;
+			textEditor.VerticalAlignment = VerticalAlignment.Stretch;
+
+			grdTopLevel.Children.Add(textEditor);
+			grdLayout.IsEnabled = false;
+
+			textEditor.AddText +=
+				(_, text) =>
+				{
+					psPaintSurface.AddText(text);
+				};
+
+			textEditor.Close +=
+				(_, _) =>
+				{
+					grdTopLevel.Children.Remove(textEditor);
+					grdLayout.IsEnabled = true;
+				};
 		}
 	}
 }

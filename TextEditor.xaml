@@ -1,0 +1,91 @@
+﻿<UserControl x:Class="SubDesigner.TextEditor"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:m="System.Windows.Media"
+             xmlns:local="clr-namespace:SubDesigner"
+             Background="White">
+    <Grid Name="grdLayout">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="*" MinHeight="200" />
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <TextBlock Grid.Row="0" Grid.ColumnSpan="3" FontFamily="Anxiety Management" FontSize="80" Margin="15 5">Text Editor</TextBlock>
+        <StackPanel Grid.Row="0" Grid.ColumnSpan="3" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top">
+            <Button Content="Add Text" FontSize="30" Padding="10" Margin="5 0" Name="cmdAddText" Click="cmdAddText_Click" />
+            <Button Content="Cancel" FontSize="30" Padding="10" Name="cmdCancel" Click="cmdCancel_Click" />
+        </StackPanel>
+        
+        <TextBox Name="txtText" Text="My Mug" Grid.Row="1" FontSize="40" TextChanged="txtText_TextChanged" />
+
+        <Grid Grid.Column="1" Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="40" />
+                <ColumnDefinition Width="40" />
+                <ColumnDefinition Width="40" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <ToggleButton Name="tbBold" Grid.Column="0" Checked="tbBold_Checked" Unchecked="tbBold_Unchecked">
+                <TextBlock FontWeight="Bold" FontSize="30">B</TextBlock>
+            </ToggleButton>
+            <ToggleButton Name="tbItalic" Grid.Column="1" Checked="tbItalic_Checked" Unchecked="tbItalic_Unchecked">
+                <TextBlock FontStyle="Italic" FontSize="30">i</TextBlock>
+            </ToggleButton>
+            <ToggleButton Name="tbUnderline" Grid.Column="2" Checked="tbUnderline_Checked" Unchecked="tbUnderline_Unchecked">
+                <TextBlock TextDecorations="Underline" FontSize="30">U</TextBlock>
+            </ToggleButton>
+            <local:KeepOpenComboBox x:Name="cboFontFace" Grid.Column="3" Text="Arial" SelectedItem="Arial" FontSize="30" SelectionChanged="cboFontFace_SelectionChanged" StaysOpenOnEdit="True">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate>
+                        <Label Content="{Binding Source}" FontFamily="{Binding}" />
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </local:KeepOpenComboBox>
+
+            <Grid Grid.Row="1" Grid.ColumnSpan="4">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <Path Grid.Column="0" Width="40" Height="35" Fill="LightGray" Data="M0,0 0,35 10,35 10,0 M20,0 20,35 30,35 30,0 M0,8.75 40,8.75 40,17.5 0,17.5 M0,26.25 40,26.25 40,35 0,35" />
+                <Path Grid.Column="1" Width="40" Height="35" Fill="LightGray" Data="M0,0 0,35 10,35 10,0 M20,0 20,35 30,35 30,0 M0,8.75 40,8.75 40,17.5 0,17.5 M0,26.25 40,26.25 40,35 0,35" />
+
+                <TextBlock Grid.Column="2" Text="Right click for outline" VerticalAlignment="Center" FontFamily="Anxiety Management" FontSize="16" Margin="4" />
+
+                <Rectangle Grid.Column="0" Width="40" Height="35" Stroke="Black" />
+                <Rectangle Grid.Column="1" Width="40" Height="35" Stroke="Black" />
+
+                <Rectangle Name="rFill" Grid.Column="0" Width="40" Height="35" />
+                <Rectangle Name="rBorder" Grid.Column="1" Width="40" Height="35" />
+
+                <UserControl Name="cNoBrush" Background="White" MouseDown="cNoBrush_MouseDown" Grid.Column="3">
+                    <Path Name="pNoBrush" Data="M40 0 0 35" Stroke="Black" />
+                </UserControl>
+
+                <local:ColourPicker x:Name="cpColour" ColourSelected="cpColour_ColourSelected" Grid.Row="1" Grid.ColumnSpan="4" />
+            </Grid>
+        </Grid>
+
+        <local:CurveEditor x:Name="ceCurve" Grid.Row="1" Grid.Column="2" HorizontalAlignment="Stretch" ClipToBounds="True" CurveChanged="ceCurve_CurveChanged" />
+
+        <local:Text x:Name="tPreview" FontSize="40" Grid.Row="2" Grid.ColumnSpan="3" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Fill="Black" ClipToBounds="True" />
+    </Grid>
+</UserControl>
