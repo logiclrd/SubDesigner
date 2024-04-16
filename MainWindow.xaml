@@ -24,16 +24,16 @@
             <Rectangle Fill="#EEE" Grid.Column="0" Grid.Row="0" />
             <TextBlock Name="tbMugDesignNumber" FontSize="30" FontFamily="Anxiety Management" Margin="8" HorizontalAlignment="Right" MouseDown="tbMugDesignNumber_MouseDown">
                         <Run FontFamily="Anxiety Management">Mug design number</Run>
-                        <Run FontFamily="Arial">: </Run>
-                        <Run FontFamily="Anxiety Management" Name="rMugNumber" />
+                        <Run FontFamily="Segoe Script">: </Run>
+                        <Run FontFamily="Segoe Script" Name="rMugNumber" />
             </TextBlock>
             <DockPanel LastChildFill="True" VerticalAlignment="Center">
-                <TextBlock FontSize="80" FontFamily="Anxiety Management" Margin="8" DockPanel.Dock="Top">
+                <TextBlock FontSize="80" FontFamily="Anxiety Management" Margin="24 8" DockPanel.Dock="Top">
                     <Run FontFamily="Anxiety Management">Design your mug here</Run>
-                    <Run FontFamily="Arial">:</Run>
+                    <Run FontFamily="Segoe Script">:</Run>
                 </TextBlock>
-                <Viewbox Name="vbPaintSurfaceContainer">
-                    <local:PaintSurface Background="White" x:Name="psPaintSurface" Width="2048" Height="855" Margin="10" MouseDown="StartMugDrag" MouseMove="DoMugDrag" MouseUp="EndMugDrag" Open="psPaintSurface_Open" ChangeMade="psPaintSurface_ChangeMade" />
+                <Viewbox Name="vbPaintSurfaceContainer" Margin="8">
+                    <local:PaintSurface Background="White" x:Name="psPaintSurface" Width="2048" Height="855" MouseDown="StartMugDrag" MouseMove="DoMugDrag" MouseUp="EndMugDrag" Open="psPaintSurface_Open" ChangeMade="psPaintSurface_ChangeMade" />
                 </Viewbox>
             </DockPanel>
             <DockPanel Grid.Row="1" Grid.ColumnSpan="2">

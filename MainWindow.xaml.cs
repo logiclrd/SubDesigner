@@ -23,8 +23,6 @@ namespace SubDesigner
 	/// </summary>
 	public partial class MainWindow : Window
 	{
-		const string MugDesignsFolder = @"C:\MugDesigns";
-
 		public MainWindow()
 		{
 			InitializeComponent();
@@ -41,9 +39,9 @@ namespace SubDesigner
 
 			int parsedIndex = -1;
 
-			Directory.CreateDirectory(MugDesignsFolder);
+			Directory.CreateDirectory(Constants.MugDesignsFolder);
 
-			_mugIndex = 1 + Directory.GetFiles(MugDesignsFolder, "*.mug.xml")
+			_mugIndex = 1 + Directory.GetFiles(Constants.MugDesignsFolder, "*.mug.xml")
 				.Select(path => Path.GetFileNameWithoutExtension(path))
 				.Select(path => Path.GetFileNameWithoutExtension(path))
 				.Where(name => int.TryParse(name, out parsedIndex))
@@ -163,14 +161,14 @@ namespace SubDesigner
 				var encoder = new PngBitmapEncoder();
 
 				encoder.Frames.Add(BitmapFrame.Create(render));
-				using (var stream = File.OpenWrite(Path.Combine(MugDesignsFolder, _mugIndex + ".png")))
+				using (var stream = File.OpenWrite(Path.Combine(Constants.MugDesignsFolder, _mugIndex + ".png")))
 					encoder.Save(stream);
 			}
 			catch { }
 
 			var mugElements = psPaintSurface.Serialize();
 
-			string mugFileName = Path.Combine(MugDesignsFolder, _mugIndex + ".mug.xml");
+			string mugFileName = Path.Combine(Constants.MugDesignsFolder, _mugIndex + ".mug.xml");
 
 			if (File.Exists(mugFileName))
 			{
@@ -583,10 +581,49 @@ namespace SubDesigner
 
 		private void cmdPrintIt_Click(object sender, RoutedEventArgs e)
 		{
+			var printPreview = new PrintPreview();
 
+			printPreview.CloneViewport3D(v3dViewport);
+
+			printPreview.Visual = psPaintSurface;
+			printPreview.MugIndex = _mugIndex;
+
+			grdTopLevel.Children.Add(printPreview);
+			grdLayout.IsEnabled = false;
+
+			printPreview.NotifyDisplayed();
+
+			printPreview.Close +=
+				(_, proceeded) =>
+				{
+					grdTopLevel.Children.Remove(printPreview);
+
+					if (proceeded)
+					{
+						var printQueued = new PrintQueued();
+
+						grdTopLevel.Children.Add(printQueued);
+
+						printQueued.Close +=
+							(_, _) =>
+							{
+								grdTopLevel.Children.Remove(printQueued);
+								grdLayout.IsEnabled = true;
+							};
+					}
+					else
+					{
+						grdLayout.IsEnabled = true;
+					}
+				};
 		}
 
 		private void cmdNewMug_Click(object sender, RoutedEventArgs e)
+		{
+			StartNewMug();
+		}
+
+		void StartNewMug()
 		{
 			_mugIndex++;
 			rMugNumber.Text = _mugIndex.ToString();
@@ -599,21 +636,25 @@ namespace SubDesigner
 			{
 				var ofdDialog = new OpenFileDialog();
 
-				ofdDialog.InitialDirectory = MugDesignsFolder;
-				ofdDialog.Filter = "Mug Designs (*.mug.xml)|*.mug.xml";
+				ofdDialog.InitialDirectory = Constants.MugDesignsFolder;
+				ofdDialog.Filter = "Mug Designs (*.mug.xml)|*.png";
 				ofdDialog.Multiselect = false;
 				ofdDialog.Title = "Select Saved Mug Design";
-				ofdDialog.DefaultExt = ".mug.xml";
+				ofdDialog.DefaultExt = ".png";
 
 				bool? result = ofdDialog.ShowDialog();
 
 				if (result ?? false)
 				{
+					StartNewMug();
+
 					MugDesign design;
 
 					try
 					{
-						using (var stream = File.OpenRead(ofdDialog.FileName))
+						string actualFileName = ofdDialog.FileName.Replace(".png", ".mug.xml");
+
+						using (var stream = File.OpenRead(actualFileName))
 							design = (MugDesign)_mugSerializer.Deserialize(stream!)!;
 					}
 					catch (Exception ex)

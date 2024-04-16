@@ -1,21 +1,11 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
-
-using HelixToolkit.Wpf;
 
 namespace SubDesigner
 {
@@ -99,7 +89,7 @@ namespace SubDesigner
 			ClearSelection();
 		}
 
-		public void AddText(Text text)
+		public void AddText(Text text, double angle = 0)
 		{
 			text.FitContent();
 
@@ -107,22 +97,22 @@ namespace SubDesigner
 
 			Vector size = (Vector)new Size(text.Width, text.Height);
 
-			AddText(centre - size * 0.5, text, fitted: true);
+			AddText(centre - size * 0.5, text, fitted: true, angle);
 		}
 
 		public TextHost AddText(Point location, Text text)
 		{
-			return AddText(location, text, fitted: false);
+			return AddText(location, text, fitted: false, angle: 0);
 		}
 
-		private TextHost AddText(Point location, Text text, bool fitted)
+		private TextHost AddText(Point location, Text text, bool fitted, double angle)
 		{
 			if (!fitted)
 				text.FitContent();
 
 			var textHost = new TextHost() { Text = text };
 
-			AddText(location, textHost, new Size(text.Width, text.Height));
+			AddText(location, textHost, new Size(text.Width, text.Height), angle);
 
 			return textHost;
 		}
@@ -310,8 +300,21 @@ namespace SubDesigner
 							element.Angle);
 					}
 
-					if (element is MugDesignText)
+					if (element is MugDesignText serializedText)
 					{
+						var text = serializedText.ToText();
+
+						text.FitContent();
+
+						var textHost = new TextHost();
+
+						textHost.Text = text;
+
+						AddText(
+							new Point(element.X, element.Y),
+							textHost,
+							new Size(element.Width, element.Height),
+							element.Angle);
 					}
 				}
 			}

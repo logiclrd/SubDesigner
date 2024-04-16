@@ -253,8 +253,8 @@ namespace SubDesigner
 			var bounds = VisualTreeHelper.GetDescendantBounds(cnvLayout);
 
 			cnvLayout.RenderTransform = new TranslateTransform(
-				0.5 * (RenderSize.Width - bounds.Width),
-				0.5 * (RenderSize.Height - bounds.Height));
+				0.5 * (ActualWidth - bounds.Width),
+				0.5 * (ActualHeight - bounds.Height));
 		}
 
 		public void FitContent()
@@ -270,6 +270,15 @@ namespace SubDesigner
 
 			Width = bounds.Width;
 			Height = bounds.Height;
+		}
+
+		public void RestoreSize(double width, double height)
+		{
+			cnvLayout.Width = width;
+			cnvLayout.Height = height;
+
+			Width = width;
+			Height = height;
 		}
 
 		static double GetPathFigureLength(PathFigure figure)
