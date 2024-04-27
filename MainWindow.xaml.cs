@@ -172,7 +172,9 @@ namespace SubDesigner
 
 			if (File.Exists(mugFileName))
 			{
-				string backupMugFileName = Path.GetFileNameWithoutExtension(mugFileName) + "_backup.mug.xml";
+				string backupMugFileName = Path.Combine(
+					Constants.MugDesignsFolder,
+					Path.GetFileNameWithoutExtension(mugFileName) + "_backup.mug.xml");
 
 				try
 				{
@@ -203,7 +205,9 @@ namespace SubDesigner
 		{
 			string stampsFolder = "Stamps";
 
-			if (!Directory.Exists(stampsFolder))
+			if (Directory.Exists(stampsFolder))
+				stampsFolder = Path.GetFullPath(stampsFolder);
+			else
 			{
 				stampsFolder = Path.Join(
 					Path.GetDirectoryName(typeof(MainWindow).Assembly.Location),
