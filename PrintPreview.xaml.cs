@@ -202,10 +202,15 @@ namespace SubDesigner
 
 			try
 			{
+				var printFolder = Path.Combine(Constants.MugDesignsFolder, "Print");
+
+				if (!Directory.Exists(printFolder))
+					Directory.CreateDirectory(printFolder);
+
 				var encoder = new PngBitmapEncoder();
 
 				encoder.Frames.Add(BitmapFrame.Create(flipped));
-				using (var stream = File.OpenWrite(Path.Combine(Constants.MugDesignsFolder, "Print", _mugIndex + ".png")))
+				using (var stream = File.OpenWrite(Path.Combine(printFolder, _mugIndex + ".png")))
 					encoder.Save(stream);
 			}
 			catch

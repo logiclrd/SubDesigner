@@ -36,7 +36,9 @@
 
         <Grid Name="grdError" Grid.Row="2" Grid.RowSpan="2" Background="#FEE" Visibility="Collapsed">
             <Label VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="Red" FontFamily="Anxiety Management" FontSize="50">
-                An error occurred saving your design to the print queue. Please bring this to our attention.
+                <TextBlock TextWrapping="Wrap" TextAlignment="Center" Padding="200 0">
+                    An error occurred saving your design to the print queue. Please bring this to our attention.
+                </TextBlock>
             </Label>
         </Grid>
         <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Center">
