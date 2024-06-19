@@ -30,6 +30,8 @@ namespace SubDesigner
 				{
 					if ((_manipulator != null) && !e.Handled)
 						ClearSelection();
+
+					e.Handled = true;
 				};
 		}
 
@@ -66,6 +68,12 @@ namespace SubDesigner
 			}
 
 			HasSelection = false;
+		}
+
+		public void DeleteSelection()
+		{
+			if (_manipulator != null)
+				DeleteItem(_manipulator.Wrapped!);
 		}
 
 		private void manipulator_Open(object? sender, UIElement selectedItem)
@@ -108,8 +116,7 @@ namespace SubDesigner
 
 		private void manipulator_Delete(object? sender, EventArgs e)
 		{
-			if (_manipulator != null)
-				DeleteItem(_manipulator.Wrapped!);
+			DeleteSelection();
 		}
 
 		private void manipulator_LostFocus(object sender, RoutedEventArgs e)

@@ -4,7 +4,9 @@
         xmlns:local="clr-namespace:SubDesigner"
         Title="SubDesigner"
         WindowStyle="None"
-        WindowState="Maximized">
+        WindowState="Maximized"
+        KeyDown="Window_KeyDown"
+        MouseDown="Window_MouseDown">
     <Grid Name="grdTopLevel">
         <Grid Name="grdLayout">
             <Grid.ColumnDefinitions>

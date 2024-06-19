@@ -799,5 +799,17 @@ namespace SubDesigner
 
 			e.Handled = true;
 		}
+
+		private void Window_MouseDown(object sender, MouseButtonEventArgs e)
+		{
+			if (!e.Handled)
+				psPaintSurface.ClearSelection();
+		}
+
+		private void Window_KeyDown(object sender, KeyEventArgs e)
+		{
+			if (e.Key == Key.Delete)
+				psPaintSurface.DeleteSelection();
+		}
 	}
 }
