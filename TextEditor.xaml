@@ -23,6 +23,7 @@
         </StackPanel>
         
         <TextBox Name="txtText" Text="Ai-Kon 2024" Grid.Row="1" FontSize="40" TextChanged="txtText_TextChanged" TextWrapping="Wrap" />
+        <Label Name="lblTextCharacterCount" Content="11" Grid.Row="1" HorizontalAlignment="Right" VerticalAlignment="Bottom" Background="LightGray" Padding="4 0" />
 
         <Grid Grid.Column="1" Grid.Row="1">
             <Grid.ColumnDefinitions>

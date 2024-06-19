@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -20,8 +19,25 @@ namespace SubDesigner
 		public List<Stamp> Stamps = new List<Stamp>();
 		public List<Stamp> LowResolutionStamps = new List<Stamp>();
 
+		public bool DisableLowResolution;
+
+		public void MakeFirstInList(Stamp stamp)
+		{
+			Stamps.Remove(stamp);
+			Stamps.Insert(index: 0, stamp);
+		}
+
+		public void EnforceMaximumCount(int maximumCount)
+		{
+			if (Stamps.Count > maximumCount)
+				Stamps.RemoveRange(maximumCount, Stamps.Count - maximumCount);
+		}
+
 		public void ReduceResolution()
 		{
+			if (DisableLowResolution)
+				return;
+
 			var scaledBitmaps = new Dictionary<BitmapSource, BitmapSource>();
 
 			long before, after;
@@ -126,6 +142,9 @@ namespace SubDesigner
 
 		public void RestoreResolution()
 		{
+			if (DisableLowResolution)
+				return;
+
 			var progressWindow = ProgressWindow.RunOnSeparateThread();
 
 			try
@@ -204,6 +223,9 @@ namespace SubDesigner
 
 		public void ReleaseHighResolution()
 		{
+			if (DisableLowResolution)
+				return;
+
 			this.Stamps = new List<Stamp>(this.LowResolutionStamps);
 
 			GC.Collect();

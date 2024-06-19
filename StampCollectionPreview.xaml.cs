@@ -24,7 +24,12 @@ namespace SubDesigner
 			lblName.Content = collection.Name;
 
 			for (int i = 0; i < 20; i++)
+			{
+				if (i >= collection.Stamps.Count)
+					break;
+
 				spItems.Children.Add(new Image() { Source = collection.Stamps[i].BitmapSource, Margin = new Thickness(15) });
+			}
 
 			this.Collection = collection;
 		}

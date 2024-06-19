@@ -345,6 +345,8 @@ namespace SubDesigner
 
 				_stampCollections.Sort((x, y) => x.Name.CompareTo(y.Name));
 
+				_stampCollections.Insert(index: 0, _recentStamps);
+
 				GC.Collect();
 				GC.WaitForPendingFinalizers();
 				GC.Collect();
@@ -355,7 +357,10 @@ namespace SubDesigner
 			}
 		}
 
+		const int RecentStampCount = 50;
+
 		List<StampCollection> _stampCollections = new List<StampCollection>();
+		StampCollection _recentStamps = new StampCollection("Recent") { DisableLowResolution = true };
 
 		Random _rnd = new Random();
 		WriteableBitmap? _textureImage;
@@ -489,14 +494,14 @@ namespace SubDesigner
 
 				spStamps.Children.Add(image);
 
-				EnableDrag(image);
+				EnableDrag(image, stamp);
 			}
 		}
 
 		const double MugStartAngle = 70;
 		const double MugEndAngle = -235;
 
-		void EnableDrag(Image image)
+		void EnableDrag(Image image, Stamp stamp)
 		{
 			Image? dragImage = null;
 
@@ -574,6 +579,9 @@ namespace SubDesigner
 							{
 								psPaintSurface.AddStamp(topLeft, image.Source, (string)image.Tag, (Size)(bottomRight - topLeft));
 								UpdateMugPreview();
+
+								_recentStamps.MakeFirstInList(stamp);
+								_recentStamps.EnforceMaximumCount(RecentStampCount);
 							}
 
 							grdTopLevel.Children.Remove(dragCanvas);

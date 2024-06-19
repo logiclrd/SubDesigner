@@ -156,6 +156,8 @@ namespace SubDesigner
 		{
 			if (tPreview != null)
 				tPreview.String = txtText.Text;
+
+			lblTextCharacterCount.Content = txtText.Text.Length.ToString();
 		}
 
 		private void tbBold_Checked(object sender, RoutedEventArgs e)
