@@ -13,6 +13,8 @@ using System.Windows.Media.Media3D;
 using System.Windows.Threading;
 using System.Xml.Serialization;
 
+using Rectangle = System.Windows.Shapes.Rectangle;
+
 using HelixToolkit.Wpf;
 
 using Microsoft.Win32;
@@ -459,6 +461,7 @@ namespace SubDesigner
 			if (_loadedStampCollection != null)
 				_loadedStampCollection.ReleaseHighResolution();
 
+			svStamps.ScrollToLeftEnd();
 			spStamps.Children.Clear();
 
 			_loadedStampCollection = collection;
@@ -466,7 +469,9 @@ namespace SubDesigner
 
 			foreach (var stamp in collection.Stamps)
 			{
-				var spacer = new Control() { Width = 20 };
+				var leftSpacer = new Control() { Width = 10 };
+				var separator = new Rectangle() { Width = 2, VerticalAlignment = VerticalAlignment.Stretch, Fill = Brushes.WhiteSmoke };
+				var rightSpacer = new Control() { Width = 10 };
 
 				var image =
 					new Image()
@@ -477,7 +482,11 @@ namespace SubDesigner
 						StretchDirection = StretchDirection.DownOnly,
 					};
 
-				spStamps.Children.Add(spacer);
+				spStamps.Children.Add(leftSpacer);
+				if (spStamps.Children.Count > 0)
+					spStamps.Children.Add(separator);
+				spStamps.Children.Add(rightSpacer);
+
 				spStamps.Children.Add(image);
 
 				EnableDrag(image);

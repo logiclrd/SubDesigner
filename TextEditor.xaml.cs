@@ -2,8 +2,11 @@
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Animation;
+using System.Windows.Shapes;
 
 namespace SubDesigner
 {
@@ -70,7 +73,45 @@ namespace SubDesigner
 
 		private void cpColour_ColourSelected(object sender, EventArgs e)
 		{
-			SelectColour(cpColour.SelectedColour, cpColour.Primary);
+			Color selectedColour = cpColour.SelectedColour;
+			var isPrimary = cpColour.Primary;
+
+			if (cpColour.GetColourSwatchLocation(selectedColour) is Rect swatchRectRelativeToColourPicker)
+			{
+				var selectedColourControl = isPrimary ? rFill : rBorder;
+
+				Rect swatchRect = cpColour.TransformToVisual(grdColour).TransformBounds(swatchRectRelativeToColourPicker);
+				Rect selectRect = LayoutInformation.GetLayoutSlot(selectedColourControl);
+
+				var animGeometry = new RectangleGeometry();
+
+				var animVisual = new Path();
+
+				animVisual.Fill = new SolidColorBrush(selectedColour);
+				animVisual.Data = animGeometry;
+
+				Grid.SetColumnSpan(animVisual, grdColour.ColumnDefinitions.Count);
+				Grid.SetRowSpan(animVisual, grdColour.RowDefinitions.Count);
+
+				grdColour.Children.Add(animVisual);
+
+				var animation = new RectAnimation();
+
+				animation.From = swatchRect;
+				animation.To = selectRect;
+				animation.Duration = TimeSpan.FromSeconds(0.2);
+
+				animation.Completed +=
+					(_, _) =>
+					{
+						grdColour.Children.Remove(animVisual);
+						SelectColour(selectedColour, isPrimary);
+					};
+
+				animGeometry.BeginAnimation(RectangleGeometry.RectProperty, animation);
+			}
+			else
+				SelectColour(selectedColour, isPrimary);
 		}
 
 		private void cNoBrush_MouseDown(object sender, MouseButtonEventArgs e)

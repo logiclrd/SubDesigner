@@ -1,17 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
+using System.Windows.Media.Animation;
 
 namespace SubDesigner
 {
@@ -105,7 +98,121 @@ namespace SubDesigner
 				{
 					_dragging = false;
 					element.ReleaseMouseCapture();
+
+					EnsureAllElementsAreVisible();
 				};
+		}
+
+		const double FitMargin = 8;
+
+		void EnsureAllElementsAreVisible()
+		{
+			Point startPoint = GetStartPoint();
+			Point endPoint = GetEndPoint();
+			Point bendPoint1 = GetBendPoint1();
+			Point bendPoint2 = GetBendPoint2();
+
+			Rect elementBounds = new Rect(startPoint, new Size(0, 0));
+
+			elementBounds.Union(endPoint);
+
+			if ((_curveMode != CurveMode.FlatLine) && (_curveMode != CurveMode.Line))
+			{
+				elementBounds.Union(bendPoint1);
+
+				if (_curveMode == CurveMode.ComplexCurve)
+					elementBounds.Union(bendPoint2);
+			}
+
+			if ((elementBounds.Left < 0) || (elementBounds.Right > cnvEditor.ActualWidth)
+			 || (elementBounds.Top < 0) || (elementBounds.Bottom > cnvEditor.ActualHeight))
+			{
+				var fitBounds = new Rect(new Point(0, 0), new Size(cnvEditor.ActualWidth, cnvEditor.ActualHeight));
+
+				double desiredAspectRatio = elementBounds.Width / elementBounds.Height;
+				double spaceAspectRatio = fitBounds.Width / fitBounds.Height;
+
+				if (desiredAspectRatio > spaceAspectRatio)
+				{
+					fitBounds.Height = elementBounds.Height * fitBounds.Width / elementBounds.Width;
+					fitBounds.Y = (cnvEditor.ActualHeight - fitBounds.Height) / 2;
+				}
+				else
+				{
+					fitBounds.Width = elementBounds.Width * fitBounds.Height / elementBounds.Height;
+					fitBounds.X = (cnvEditor.ActualWidth - fitBounds.Width) / 2;
+				}
+
+				fitBounds.Inflate(-FitMargin, -FitMargin);
+
+				var anim = new RectAnimation();
+
+				anim.From = elementBounds;
+				anim.To = fitBounds;
+				anim.Duration = TimeSpan.FromSeconds(0.4);
+
+				var animTarget = new AnimationTarget();
+
+				animTarget.StartRect = elementBounds;
+				animTarget.EndRect = fitBounds;
+
+				System.Diagnostics.Debug.WriteLine("Animate to: " + fitBounds);
+
+				anim.Completed += (_, _) => System.Diagnostics.Debug.WriteLine("Animation completed");
+
+				animTarget.RectChanged +=
+					(_, _) =>
+					{
+						try
+						{
+							SetStartPoint(animTarget.TransformPoint(startPoint));
+							SetEndPoint(animTarget.TransformPoint(endPoint));
+							SetBendPoint1(animTarget.TransformPoint(bendPoint1));
+							SetBendPoint2(animTarget.TransformPoint(bendPoint2));
+
+							System.Diagnostics.Debug.WriteLine("Animation frame: " + animTarget.Rect);
+						}
+						catch
+						{
+							System.Diagnostics.Debug.WriteLine("Animation exception");
+						}
+					};
+
+				animTarget.BeginAnimation(AnimationTarget.RectProperty, anim);
+			}
+		}
+
+		class AnimationTarget : UIElement
+		{
+			public static DependencyProperty RectProperty = DependencyProperty.Register(nameof(Rect), typeof(Rect), typeof(AnimationTarget), new UIPropertyMetadata(RectChangedCallback));
+
+			public Rect StartRect;
+			public Rect EndRect;
+
+			public Rect Rect
+			{
+				get => (Rect)GetValue(RectProperty);
+				set => SetValue(RectProperty, value);
+			}
+
+			public Point TransformPoint(Point pt)
+			{
+				var currentRect = Rect;
+
+				var relativePosition = pt - StartRect.TopLeft;
+
+				relativePosition.X *= currentRect.Width / StartRect.Width;
+				relativePosition.Y *= currentRect.Height / StartRect.Height;
+
+				return (Point)(relativePosition + currentRect.TopLeft);
+			}
+
+			public event EventHandler? RectChanged;
+
+			static void RectChangedCallback(DependencyObject d, DependencyPropertyChangedEventArgs e)
+			{
+				((AnimationTarget)d).RectChanged?.Invoke(d, EventArgs.Empty);
+			}
 		}
 
 		static TextCurve CreateDefaultCurve()

@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Input;
@@ -152,6 +153,15 @@ namespace SubDesigner
 				else
 					swatch.StrokeThickness = 0;
 			}
+		}
+
+		public Rect? GetColourSwatchLocation(Color colour)
+		{
+			foreach (var swatch in grdSwatches.Children.OfType<Rectangle>())
+				if ((swatch.Fill is SolidColorBrush fillBrush) && (fillBrush.Color == colour))
+					return LayoutInformation.GetLayoutSlot(swatch);
+
+			return null;
 		}
 	}
 }
