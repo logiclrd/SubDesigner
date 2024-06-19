@@ -5,6 +5,9 @@
         Width="500" Height="100" ResizeMode="NoResize"
         WindowStyle="ToolWindow"
         WindowStartupLocation="CenterScreen">
+    <Window.TaskbarItemInfo>
+        <TaskbarItemInfo x:Name="tiiProgressInTaskBar" ProgressState="Normal" />
+    </Window.TaskbarItemInfo>
     <Grid Margin="8">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />

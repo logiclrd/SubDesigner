@@ -124,7 +124,7 @@ namespace SubDesigner
 			ClearSelection();
 		}
 
-		public void AddText(Text text, double angle = 0)
+		public void AddText(Text text, double angle = 0, bool isFlipped = false)
 		{
 			text.FitContent();
 
@@ -132,27 +132,27 @@ namespace SubDesigner
 
 			Vector size = (Vector)new Size(text.Width, text.Height);
 
-			AddText(centre - size * 0.5, text, fitted: true, angle);
+			AddText(centre - size * 0.5, text, fitted: true, angle, isFlipped);
 		}
 
 		public TextHost AddText(Point location, Text text)
 		{
-			return AddText(location, text, fitted: false, angle: 0);
+			return AddText(location, text, fitted: false, angle: 0, isFlipped: false);
 		}
 
-		private TextHost AddText(Point location, Text text, bool fitted, double angle)
+		private TextHost AddText(Point location, Text text, bool fitted, double angle, bool isFlipped)
 		{
 			if (!fitted)
 				text.FitContent();
 
 			var textHost = new TextHost() { Text = text };
 
-			AddText(location, textHost, new Size(text.Width, text.Height), angle);
+			AddText(location, textHost, new Size(text.Width, text.Height), angle, isFlipped);
 
 			return textHost;
 		}
 
-		private void AddText(Point location, TextHost text, Size size, double angle = 0)
+		private void AddText(Point location, TextHost text, Size size, double angle = 0, bool isFlipped = false)
 		{
 			text.Width = size.Width;
 			text.Height = size.Height;
@@ -161,19 +161,20 @@ namespace SubDesigner
 			Canvas.SetTop(text, location.Y);
 
 			text.RenderTransform =
-				new RotateTransform()
+				new RotateFlipTransform()
 				{
 					Angle = angle,
-					CenterX = size.Width * 0.5,
-					CenterY = size.Height * 0.5
-				};
+					CentreX = size.Width * 0.5,
+					CentreY = size.Height * 0.5,
+					IsFlipped = isFlipped,
+				}.Build();
 
 			cnvContents.Children.Add(text);
 
 			text.MouseDown += element_MouseDown;
 		}
 
-		public void AddStamp(Point location, ImageSource stampBitmap, string stampDescriptor, Size initialSize, double angle = 0)
+		public void AddStamp(Point location, ImageSource stampBitmap, string stampDescriptor, Size initialSize, double angle = 0, bool isFlipped = false)
 		{
 			var stamp = new Image();
 
@@ -187,12 +188,13 @@ namespace SubDesigner
 			Canvas.SetTop(stamp, location.Y);
 
 			stamp.RenderTransform =
-				new RotateTransform()
+				new RotateFlipTransform()
 				{
 					Angle = angle,
-					CenterX = initialSize.Width * 0.5,
-					CenterY = initialSize.Height * 0.5
-				};
+					CentreX = initialSize.Width * 0.5,
+					CentreY = initialSize.Height * 0.5,
+					IsFlipped = isFlipped,
+				}.Build();
 
 			cnvContents.Children.Add(stamp);
 
@@ -265,8 +267,10 @@ namespace SubDesigner
 				serializedElement.Width = element.Width;
 				serializedElement.Height = element.Height;
 
-				if (element.RenderTransform is RotateTransform rotateTransform)
-					serializedElement.Angle = rotateTransform.Angle;
+				var transform = RotateFlipTransform.Parse(element.RenderTransform);
+
+				serializedElement.Angle = transform.Angle;
+				serializedElement.IsFlipped = transform.IsFlipped;
 
 				design.Elements.Add(serializedElement);
 			}
@@ -336,7 +340,8 @@ namespace SubDesigner
 							loadedStamp.BitmapSource!,
 							loadedStamp.Descriptor!,
 							new Size(element.Width, element.Height),
-							element.Angle);
+							element.Angle,
+							element.IsFlipped);
 					}
 
 					if (element is MugDesignText serializedText)
@@ -353,7 +358,8 @@ namespace SubDesigner
 							new Point(element.X, element.Y),
 							textHost,
 							new Size(element.Width, element.Height),
-							element.Angle);
+							element.Angle,
+							element.IsFlipped);
 					}
 				}
 			}

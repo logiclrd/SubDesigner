@@ -74,11 +74,12 @@ namespace SubDesigner
 				Wrapped.Width = this.ActualWidth - 2 * BorderSize;
 				Wrapped.Height = this.ActualHeight - 2 * BorderSize;
 
-				if (Wrapped.RenderTransform is RotateTransform rotateTransform)
-				{
-					rotateTransform.CenterX = Wrapped.Width * 0.5;
-					rotateTransform.CenterY = Wrapped.Height * 0.5;
-				}
+				var transform = RotateFlipTransform.Parse(Wrapped.RenderTransform);
+
+				transform.CentreX = Wrapped.Width * 0.5;
+				transform.CentreY = Wrapped.Height * 0.5;
+
+				transform.ApplyTo(Wrapped);
 			}
 		}
 
@@ -265,6 +266,7 @@ namespace SubDesigner
 		bool _rotating;
 		double _rotateStartAngle;
 		double _rotateStartX;
+		double _rotateStartY;
 
 		private void StartRotate(object sender, MouseButtonEventArgs e)
 		{
@@ -279,22 +281,33 @@ namespace SubDesigner
 				var clickPoint = Mouse.GetPosition(parentElement);
 
 				_rotateStartX = clickPoint.X;
+				_rotateStartY = clickPoint.Y;
 
-				if (this.RenderTransform is RotateTransform rotateTransform)
-					_rotateStartAngle = rotateTransform.Angle;
+				var transform = RotateFlipTransform.Parse(this.RenderTransform);
+
+				_rotateStartAngle = transform.Angle;
 			}
 		}
 
 		private void DoRotate(object sender, MouseEventArgs e)
 		{
-			if (_rotating && (Parent is UIElement parentElement))
+			if (_rotating && (Parent is FrameworkElement parentElement))
 			{
 				var mousePosition = Mouse.GetPosition(parentElement);
 
 				double da = mousePosition.X - _rotateStartX;
 
-				if (this.RenderTransform is RotateTransform rotateTransform)
-					rotateTransform.Angle = _rotateStartAngle + da;
+				double dy = mousePosition.Y - _rotateStartY;
+
+				double circleRadius = vbRotateWidgetSpace.ActualWidth * 0.425;
+
+				if (Math.Abs(dy) < circleRadius)
+					da = 90 * Math.Round(da / 90);
+
+				var transform = RotateFlipTransform.Parse(this.RenderTransform);
+
+				transform.Angle = _rotateStartAngle + da;
+				transform.ApplyTo(this);
 
 				OnChangeMade(Wrapped);
 			}
@@ -322,6 +335,14 @@ namespace SubDesigner
 		private void cmdDelete_Click(object sender, RoutedEventArgs e)
 		{
 			OnDelete();
+		}
+
+		private void cmdFlip_Click(object sender, RoutedEventArgs e)
+		{
+			var transform = RotateFlipTransform.Parse(this.RenderTransform);
+
+			transform.IsFlipped = !transform.IsFlipped;
+			transform.ApplyTo(this);
 		}
 	}
 }

@@ -40,22 +40,35 @@
             <Path Stroke="Red" Data="M0 0 16 16 M16 0 0 16" />
         </Button>
 
-        <Button Name="cmdRaise" Click="cmdRaise_Click" Width="30" Height="30" Grid.Row="1" Grid.Column="1" Grid.RowSpan="3" Grid.ColumnSpan="3" HorizontalAlignment="Left" VerticalAlignment="Top" BorderThickness="0" Focusable="False">
-            <Grid>
-                <Path Fill="LightBlue" Data="M1 1 15 1 15 15 1 15 1 1z"></Path>
-                <Path Stroke="Black" Data="M1 1 15 1 15 15 1 15 1 1 M15 8 21 8 21 21 8 21 8 15" />
-            </Grid>
-        </Button>
-
-        <Button Name="cmdLower" Click="cmdLower_Click" Width="30" Height="30" Grid.Row="1" Grid.Column="1" Grid.RowSpan="3" Grid.ColumnSpan="3" HorizontalAlignment="Left" VerticalAlignment="Bottom" BorderThickness="0" Focusable="False">
-            <Grid>
-                <Path Fill="LightBlue" Data="M1 1 13 1 13 8 8 8 8 13 1 13 1 1z"></Path>
-                <Path Stroke="Black" Data="M1 1 13 1 13 8 8 8 8 13 1 13 1 1 M13 8 21 8 21 21 8 21 8 13" />
-            </Grid>
-        </Button>
-
-        <Viewbox Grid.Row="1" Grid.Column="1" Grid.RowSpan="3" Grid.ColumnSpan="3" Margin="10">
+        <Viewbox Name="vbRotateWidgetSpace" Grid.Row="1" Grid.Column="1" Grid.RowSpan="3" Grid.ColumnSpan="3" Margin="10">
             <Path Name="pRotateWidget" Data="m 59.563289,-8.155058 -15.34532,9.348784 a 2.500245,2.500245 0 0 0 -0.83457,3.435449 l 9.18807,15.081766 4.27002,-2.601391 -6.20272,-10.181291 c 13.34437,4.68092 22.88853,17.37236 22.88853,32.335494 1e-5,18.952835 -15.31071,34.26354 -34.26355,34.26354 -18.952827,0 -34.263539,-15.310708 -34.263537,-34.26354 0,-14.963709 9.544442,-27.655527 22.889557,-32.336011 l -6.20272,10.181291 4.27002,2.601392 9.18704,-15.080217 a 2.500245,2.500245 0 0 0 -0.83458,-3.435449 l -15.345312,-9.348783 -2.601392,4.270023 9.975104,6.077149 C 11.018013,7.548043 0,22.136601 0,39.263753 c -2e-6,21.655029 17.608725,39.26375 39.263749,39.26375 21.65504,0 39.26376,-17.608718 39.26376,-39.26375 0,-17.12755 -11.01849,-31.716548 -26.33896,-37.071122 l 9.97613,-6.077665 z" Fill="Black" MouseDown="StartRotate" MouseMove="DoRotate" MouseUp="EndRotate" />
         </Viewbox>
+
+        <Button Name="cmdRaise" Click="cmdRaise_Click" Width="30" Height="30" Grid.Row="1" Grid.Column="1" Grid.RowSpan="3" Grid.ColumnSpan="3" HorizontalAlignment="Left" VerticalAlignment="Top" BorderThickness="0" Focusable="False" Background="Transparent">
+            <Border CornerRadius="4" Background="#E0E0E0">
+                <Grid Margin="3">
+                    <Path Fill="LightBlue" Data="M1 1 15 1 15 15 1 15 1 1z"></Path>
+                    <Path Stroke="Black" Data="M1 1 15 1 15 15 1 15 1 1 M15 8 21 8 21 21 8 21 8 15" />
+                </Grid>
+            </Border>
+        </Button>
+
+        <Button Name="cmdLower" Click="cmdLower_Click" Width="30" Height="30" Grid.Row="1" Grid.Column="1" Grid.RowSpan="3" Grid.ColumnSpan="3" HorizontalAlignment="Left" VerticalAlignment="Bottom" BorderThickness="0" Focusable="False" Background="Transparent">
+            <Border CornerRadius="4" Background="#E0E0E0">
+                <Grid Margin="3">
+                    <Path Fill="LightBlue" Data="M1 1 13 1 13 8 8 8 8 13 1 13 1 1z"></Path>
+                    <Path Stroke="Black" Data="M1 1 13 1 13 8 8 8 8 13 1 13 1 1 M13 8 21 8 21 21 8 21 8 13" />
+                </Grid>
+            </Border>
+        </Button>
+
+        <Button Name="cmdFlip" Click="cmdFlip_Click" Width="30" Height="30" Grid.Row="1" Grid.Column="1" Grid.RowSpan="3" Grid.ColumnSpan="3" HorizontalAlignment="Center" VerticalAlignment="Bottom" BorderThickness="0" Focusable="False" Background="Transparent">
+            <Border CornerRadius="4" Background="#E0E0E0">
+                <Grid Margin="3">
+                    <Path Stroke="Black" Data="M0 20 8 3 8 20z M20 20 12 3 12 20z M10 0 10 3 M10 6 10 9 M10 12 10 15 M10 18 10 21" />
+                    <Path Fill="Black" Data="M0 20 8 3 8 20z" />
+                </Grid>
+            </Border>
+        </Button>
     </Grid>
 </UserControl>

@@ -11,5 +11,6 @@ namespace SubDesigner
 		public double Width;
 		public double Height;
 		public double Angle;
+		public bool IsFlipped;
 	}
 }

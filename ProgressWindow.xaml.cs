@@ -106,6 +106,8 @@ namespace SubDesigner
 				rCurrentIndex.Text = _currentIndex.ToString();
 				pbProgress.Value = _currentIndex;
 			}
+
+			tiiProgressInTaskBar.ProgressValue = pbProgress.Value / pbProgress.Maximum;
 		}
 
 		public void CloseWindow()
