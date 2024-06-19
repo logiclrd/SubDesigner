@@ -41,7 +41,7 @@ namespace SubDesigner
 
 			Directory.CreateDirectory(Constants.MugDesignsFolder);
 
-			_mugIndex = 1 + Directory.GetFiles(Constants.MugDesignsFolder, "*.mug.xml")
+			_mugIndex = Directory.GetFiles(Constants.MugDesignsFolder, "*.mug.xml")
 				.Select(path => Path.GetFileNameWithoutExtension(path))
 				.Select(path => Path.GetFileNameWithoutExtension(path))
 				.Where(name => int.TryParse(name, out parsedIndex))
@@ -49,7 +49,29 @@ namespace SubDesigner
 				.DefaultIfEmpty(-1)
 				.Max();
 
+			if (!IsEmptyMugDesign(_mugIndex))
+				_mugIndex++;
+
 			rMugNumber.Text = _mugIndex.ToString();
+		}
+
+		bool IsEmptyMugDesign(int mugIndex)
+		{
+			try
+			{
+				string mugDesignFileName = mugIndex + ".mug.xml";
+
+				using (var stream = File.OpenRead(Path.Combine(Constants.MugDesignsFolder, mugDesignFileName)))
+				{
+					var design = (MugDesign)_mugSerializer.Deserialize(stream!)!;
+
+					return (design.Elements.Count == 0);
+				}
+			}
+			catch
+			{
+				return false;
+			}
 		}
 
 		int _mugIndex;
@@ -241,7 +263,17 @@ namespace SubDesigner
 
 				foreach (var file in files)
 				{
-					BitmapSource bitmap = new BitmapImage(new Uri(file));
+					var bitmap = new BitmapImage();
+
+					using (var fileStream = File.OpenRead(file))
+					{
+						bitmap.BeginInit();
+						bitmap.CacheOption = BitmapCacheOption.OnLoad;
+						bitmap.StreamSource = fileStream;
+						bitmap.EndInit();
+					}
+
+					bitmap.Freeze();
 
 					string itemsFile = file + ".items";
 
@@ -249,6 +281,7 @@ namespace SubDesigner
 					{
 						var stamp = new Stamp();
 
+						stamp.BitmapFileName = file;
 						stamp.BitmapSource = bitmap;
 						stamp.Descriptor = file;
 
@@ -278,6 +311,7 @@ namespace SubDesigner
 
 							var stamp = new Stamp();
 
+							stamp.BitmapFileName = file;
 							stamp.BitmapSource = croppedBitmap;
 							stamp.Descriptor = $"{x}:{y}:{w}:{h}::{file}";
 
@@ -286,8 +320,14 @@ namespace SubDesigner
 					}
 				}
 
+				collection.ReduceResolution();
+
 				_stampCollections.Add(collection);
 			}
+
+			GC.Collect();
+			GC.WaitForPendingFinalizers();
+			GC.Collect();
 		}
 
 		List<StampCollection> _stampCollections = new List<StampCollection>();
@@ -384,9 +424,22 @@ namespace SubDesigner
 			grdTopLevel.Children.Add(collectionList);
 		}
 
+		StampCollection? _loadedStampCollection;
+
 		private void LoadStampCollection(StampCollection collection)
 		{
+			foreach (var image in spStamps.Children.OfType<Image>())
+				image.Source = null;
+
+			spStamps.UpdateLayout();
+
+			if (_loadedStampCollection != null)
+				_loadedStampCollection.ReleaseHighResolution();
+
 			spStamps.Children.Clear();
+
+			_loadedStampCollection = collection;
+			_loadedStampCollection.RestoreResolution();
 
 			foreach (var stamp in collection.Stamps)
 			{

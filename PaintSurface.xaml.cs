@@ -164,6 +164,11 @@ namespace SubDesigner
 			stamp.MouseDown += element_MouseDown;
 		}
 
+		public IEnumerable<Image> EnumerateStamps()
+		{
+			return cnvContents.Children.OfType<Image>();
+		}
+
 		public void ClearItems()
 		{
 			ClearSelection();
@@ -253,10 +258,7 @@ namespace SubDesigner
 							BitmapSource bitmap;
 
 							if (!stamp.Descriptor.Contains("::"))
-							{
 								bitmap = new BitmapImage(new Uri(stamp.Descriptor));
-
-							}
 							else
 							{
 								string[] parts = stamp.Descriptor.Split("::");

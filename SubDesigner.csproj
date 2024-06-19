@@ -24,4 +24,8 @@
     </None>
   </ItemGroup>
 
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="copy /Y &quot;$(ProjectDir)$(OutDir)*&quot; B:\SD\" />
+  </Target>
+
 </Project>

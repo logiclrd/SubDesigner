@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "SubDesigner": {
+      "commandName": "Project"
+    },
+    "Executable": {
+      "commandName": "Executable",
+      "executablePath": "B:\\SD\\SubDesigner.exe",
+      "workingDirectory": "B:\\SD"
+    }
+  }
+}

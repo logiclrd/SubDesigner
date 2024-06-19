@@ -4,6 +4,7 @@ namespace SubDesigner
 {
 	public class Stamp
 	{
+		public string? BitmapFileName;
 		public BitmapSource? BitmapSource;
 		public string? Descriptor;
 	}
