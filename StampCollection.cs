@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -125,60 +126,79 @@ namespace SubDesigner
 
 		public void RestoreResolution()
 		{
-			this.LowResolutionStamps = new List<Stamp>(this.Stamps);
+			var progressWindow = ProgressWindow.RunOnSeparateThread();
 
-			var bitmapByFileName = new Dictionary<string, BitmapSource>();
-
-			foreach (var bitmapFileName in Stamps.Select(stamp => stamp.BitmapFileName!).Distinct())
+			try
 			{
-				var bitmap = new BitmapImage();
+				this.LowResolutionStamps = new List<Stamp>(this.Stamps);
 
-				using (var fileStream = File.OpenRead(bitmapFileName))
+				var bitmapByFileName = new Dictionary<string, BitmapSource>();
+
+				var bitmapFileNames = Stamps.Select(stamp => stamp.BitmapFileName!).Distinct().ToList();
+
+				int maxProgress = bitmapFileNames.Count + 1;
+
+				for (int index = 0; index < bitmapFileNames.Count; index++)
 				{
-					bitmap.BeginInit();
-					bitmap.CacheOption = BitmapCacheOption.OnLoad;
-					bitmap.StreamSource = fileStream;
-					bitmap.EndInit();
+					progressWindow.UpdateProgress(index + 1, maxProgress);
+
+					var bitmapFileName = bitmapFileNames[index];
+
+					var bitmap = new BitmapImage();
+
+					using (var fileStream = File.OpenRead(bitmapFileName))
+					{
+						bitmap.BeginInit();
+						bitmap.CacheOption = BitmapCacheOption.OnLoad;
+						bitmap.StreamSource = fileStream;
+						bitmap.EndInit();
+					}
+
+					bitmap.Freeze();
+
+					bitmapByFileName[bitmapFileName] = bitmap;
 				}
 
-				bitmap.Freeze();
+				progressWindow.UpdateProgress(maxProgress, maxProgress);
 
-				bitmapByFileName[bitmapFileName] = bitmap;
-			}
-
-			foreach (var stamp in Stamps)
-			{
-				if (bitmapByFileName.TryGetValue(stamp.BitmapFileName!, out var bitmapSource))
+				foreach (var stamp in Stamps)
 				{
-					stamp.BitmapSource = bitmapSource;
-
-					if (stamp.Descriptor != null)
+					if (bitmapByFileName.TryGetValue(stamp.BitmapFileName!, out var bitmapSource))
 					{
-						string[] parts = stamp.Descriptor.Split("::");
+						stamp.BitmapSource = bitmapSource;
 
-						if (parts.Length != 2)
-							continue;
+						if (stamp.Descriptor != null)
+						{
+							string[] parts = stamp.Descriptor.Split("::");
 
-						string[] crop = parts[0].Split(":");
-						string fileName = parts[1];
+							if (parts.Length != 2)
+								continue;
 
-						if (crop.Length != 4)
-							continue;
+							string[] crop = parts[0].Split(":");
+							string fileName = parts[1];
 
-						if (!int.TryParse(crop[0], out int x))
-							continue;
-						if (!int.TryParse(crop[1], out int y))
-							continue;
-						if (!int.TryParse(crop[2], out int w))
-							continue;
-						if (!int.TryParse(crop[3], out int h))
-							continue;
+							if (crop.Length != 4)
+								continue;
 
-						stamp.BitmapSource = new CroppedBitmap(
-							bitmapSource,
-							new Int32Rect(x, y, w, h));
+							if (!int.TryParse(crop[0], out int x))
+								continue;
+							if (!int.TryParse(crop[1], out int y))
+								continue;
+							if (!int.TryParse(crop[2], out int w))
+								continue;
+							if (!int.TryParse(crop[3], out int h))
+								continue;
+
+							stamp.BitmapSource = new CroppedBitmap(
+								bitmapSource,
+								new Int32Rect(x, y, w, h));
+						}
 					}
 				}
+			}
+			finally
+			{
+				progressWindow.CloseWindow();
 			}
 		}
 

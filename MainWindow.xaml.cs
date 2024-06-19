@@ -53,6 +53,13 @@ namespace SubDesigner
 				_mugIndex++;
 
 			rMugNumber.Text = _mugIndex.ToString();
+
+			this.Loaded += MainWindow_Loaded;
+		}
+
+		private void MainWindow_Loaded(object sender, RoutedEventArgs e)
+		{
+			Activate();
 		}
 
 		bool IsEmptyMugDesign(int mugIndex)
@@ -225,111 +232,124 @@ namespace SubDesigner
 
 		void InitializeStamps()
 		{
-			string stampsFolder = "Stamps";
+			var progressWindow = ProgressWindow.RunOnSeparateThread();
 
-			if (Directory.Exists(stampsFolder))
-				stampsFolder = Path.GetFullPath(stampsFolder);
-			else
+			try
 			{
-				stampsFolder = Path.Join(
-					Path.GetDirectoryName(typeof(MainWindow).Assembly.Location),
-					"Stamps");
+				string stampsFolder = "Stamps";
 
-				while (!Directory.Exists(stampsFolder))
+				if (Directory.Exists(stampsFolder))
+					stampsFolder = Path.GetFullPath(stampsFolder);
+				else
 				{
-					string? parentFolder = Path.GetDirectoryName(Path.GetDirectoryName(stampsFolder));
+					stampsFolder = Path.Join(
+						Path.GetDirectoryName(typeof(MainWindow).Assembly.Location),
+						"Stamps");
 
-					if (parentFolder == null)
-						return;
+					while (!Directory.Exists(stampsFolder))
+					{
+						string? parentFolder = Path.GetDirectoryName(Path.GetDirectoryName(stampsFolder));
 
-					stampsFolder = Path.Join(parentFolder, "Stamps");
+						if (parentFolder == null)
+							return;
+
+						stampsFolder = Path.Join(parentFolder, "Stamps");
+					}
 				}
-			}
 
-			string[] stampCollectionFolders = Directory.GetDirectories(stampsFolder);
+				string[] stampCollectionFolders = Directory.GetDirectories(stampsFolder);
 
-			foreach (var stampCollectionFolder in stampCollectionFolders)
-			{
-				string collectionName = Path.GetFileName(stampCollectionFolder);
-
-				string nameFile = Path.Join(stampCollectionFolder, "Name");
-
-				if (File.Exists(nameFile))
-					collectionName = new StreamReader(nameFile).ReadLine()!;
-
-				var collection = new StampCollection(collectionName);
-
-				string[] files = Directory.GetFiles(stampCollectionFolder, "*.png", SearchOption.AllDirectories);
-
-				foreach (var file in files)
+				for (int index = 0; index < stampCollectionFolders.Length; index++)
 				{
-					var bitmap = new BitmapImage();
+					progressWindow.UpdateProgress(index + 1, stampCollectionFolders.Length);
 
-					using (var fileStream = File.OpenRead(file))
+					var stampCollectionFolder = stampCollectionFolders[index];
+
+					string collectionName = Path.GetFileName(stampCollectionFolder);
+
+					string nameFile = Path.Join(stampCollectionFolder, "Name");
+
+					if (File.Exists(nameFile))
+						collectionName = new StreamReader(nameFile).ReadLine()!;
+
+					var collection = new StampCollection(collectionName);
+
+					string[] files = Directory.GetFiles(stampCollectionFolder, "*.png", SearchOption.AllDirectories);
+
+					foreach (var file in files)
 					{
-						bitmap.BeginInit();
-						bitmap.CacheOption = BitmapCacheOption.OnLoad;
-						bitmap.StreamSource = fileStream;
-						bitmap.EndInit();
-					}
+						var bitmap = new BitmapImage();
 
-					bitmap.Freeze();
-
-					string itemsFile = file + ".items";
-
-					if (!File.Exists(itemsFile))
-					{
-						var stamp = new Stamp();
-
-						stamp.BitmapFileName = file;
-						stamp.BitmapSource = bitmap;
-						stamp.Descriptor = file;
-
-						collection.Stamps.Add(stamp);
-					}
-					else
-					{
-						foreach (string item in File.ReadAllLines(itemsFile))
+						using (var fileStream = File.OpenRead(file))
 						{
-							string[] parts = item.Split(',');
+							bitmap.BeginInit();
+							bitmap.CacheOption = BitmapCacheOption.OnLoad;
+							bitmap.StreamSource = fileStream;
+							bitmap.EndInit();
+						}
 
-							if (parts.Length != 4)
-								continue;
+						bitmap.Freeze();
 
-							if (!int.TryParse(parts[0], out int x))
-								continue;
-							if (!int.TryParse(parts[1], out int y))
-								continue;
-							if (!int.TryParse(parts[2], out int w))
-								continue;
-							if (!int.TryParse(parts[3], out int h))
-								continue;
+						string itemsFile = file + ".items";
 
-							var croppedBitmap = new CroppedBitmap(
-								bitmap,
-								new Int32Rect(x, y, w, h));
-
+						if (!File.Exists(itemsFile))
+						{
 							var stamp = new Stamp();
 
 							stamp.BitmapFileName = file;
-							stamp.BitmapSource = croppedBitmap;
-							stamp.Descriptor = $"{x}:{y}:{w}:{h}::{file}";
+							stamp.BitmapSource = bitmap;
+							stamp.Descriptor = file;
 
 							collection.Stamps.Add(stamp);
 						}
+						else
+						{
+							foreach (string item in File.ReadAllLines(itemsFile))
+							{
+								string[] parts = item.Split(',');
+
+								if (parts.Length != 4)
+									continue;
+
+								if (!int.TryParse(parts[0], out int x))
+									continue;
+								if (!int.TryParse(parts[1], out int y))
+									continue;
+								if (!int.TryParse(parts[2], out int w))
+									continue;
+								if (!int.TryParse(parts[3], out int h))
+									continue;
+
+								var croppedBitmap = new CroppedBitmap(
+									bitmap,
+									new Int32Rect(x, y, w, h));
+
+								var stamp = new Stamp();
+
+								stamp.BitmapFileName = file;
+								stamp.BitmapSource = croppedBitmap;
+								stamp.Descriptor = $"{x}:{y}:{w}:{h}::{file}";
+
+								collection.Stamps.Add(stamp);
+							}
+						}
 					}
+
+					collection.ReduceResolution();
+
+					_stampCollections.Add(collection);
 				}
 
-				collection.ReduceResolution();
+				_stampCollections.Sort((x, y) => x.Name.CompareTo(y.Name));
 
-				_stampCollections.Add(collection);
+				GC.Collect();
+				GC.WaitForPendingFinalizers();
+				GC.Collect();
 			}
-
-			_stampCollections.Sort((x, y) => x.Name.CompareTo(y.Name));
-
-			GC.Collect();
-			GC.WaitForPendingFinalizers();
-			GC.Collect();
+			finally
+			{
+				progressWindow.CloseWindow();
+			}
 		}
 
 		List<StampCollection> _stampCollections = new List<StampCollection>();
