@@ -45,7 +45,7 @@
                     <local:StampCollectionButton />
                 </Button>
                 
-                <ScrollViewer VerticalScrollBarVisibility="Disabled" HorizontalScrollBarVisibility="Visible">
+                <ScrollViewer Name="svStamps" VerticalScrollBarVisibility="Disabled" HorizontalScrollBarVisibility="Visible" PreviewMouseWheel="svStamps_PreviewMouseWheel">
                     <StackPanel Orientation="Horizontal" Name="spStamps">
                         <local:FindStampsHereHint />
                     </StackPanel>

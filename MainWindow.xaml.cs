@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -757,6 +758,46 @@ namespace SubDesigner
 					UpdateMugPreview();
 				}
 			}
+		}
+
+		private void svStamps_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
+		{
+			int detents = e.Delta / 8;
+
+			Action detentAction;
+
+			if (detents > 0)
+			{
+				detentAction =
+					() =>
+					{
+						Dispatcher.Invoke(() => svStamps.LineLeft());
+						detents--;
+					};
+			}
+			else
+			{
+				detentAction =
+					() =>
+					{
+						Dispatcher.Invoke(() => svStamps.LineRight());
+						detents++;
+					};
+			}
+
+			var frameDelay = TimeSpan.FromMilliseconds(30);
+
+			Task.Run(
+				async () =>
+				{
+					while (detents != 0)
+					{
+						detentAction();
+						await Task.Delay(frameDelay);
+					}
+				});
+
+			e.Handled = true;
 		}
 	}
 }
