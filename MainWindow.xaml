@@ -34,6 +34,7 @@
                     <Run FontFamily="Anxiety Management">Design your mug here</Run>
                     <Run FontFamily="Segoe Script">:</Run>
                 </TextBlock>
+                <Button Name="cmdSetBackground" Click="cmdSetBackground_Click" DockPanel.Dock="Top" HorizontalAlignment="Right" Padding="8" FontFamily="Anxiety Management" FontSize="20">Set a background</Button>
                 <Viewbox Name="vbPaintSurfaceContainer" Margin="8">
                     <local:PaintSurface Background="White" x:Name="psPaintSurface" Width="2048" Height="855" MouseDown="StartMugDrag" MouseMove="DoMugDrag" MouseUp="EndMugDrag" Open="psPaintSurface_Open" ChangeMade="psPaintSurface_ChangeMade" />
                 </Viewbox>

@@ -135,5 +135,23 @@ namespace SubDesigner
 				}
 			}
 		}
+
+		public void HighlightColour(Color colour)
+		{
+			foreach (var swatch in grdSwatches.Children.OfType<Rectangle>())
+			{
+				if ((swatch.Fill is SolidColorBrush fillBrush) && (fillBrush.Color == colour))
+				{
+					if (colour.R + colour.G + colour.B < 50)
+						swatch.Stroke = Brushes.White;
+					else
+						swatch.Stroke = Brushes.Black;
+
+					swatch.StrokeThickness = 3;
+				}
+				else
+					swatch.StrokeThickness = 0;
+			}
+		}
 	}
 }

@@ -811,5 +811,35 @@ namespace SubDesigner
 			if (e.Key == Key.Delete)
 				psPaintSurface.DeleteSelection();
 		}
+
+		private void cmdSetBackground_Click(object sender, RoutedEventArgs e)
+		{
+			grdLayout.IsEnabled = false;
+
+			var colourPicker = new BackgroundColourPopup();
+
+			colourPicker.HorizontalAlignment = HorizontalAlignment.Stretch;
+			colourPicker.VerticalAlignment = VerticalAlignment.Stretch;
+
+			if (psPaintSurface.Background is SolidColorBrush currentBackground)
+				colourPicker.SetSelectedColour(currentBackground.Color);
+
+			grdTopLevel.Children.Add(colourPicker);
+			grdLayout.IsEnabled = false;
+
+			colourPicker.SelectedColourChanged +=
+				(_, text) =>
+				{
+					psPaintSurface.Background = new SolidColorBrush(colourPicker.SelectedColour);
+					UpdateMugPreview();
+				};
+
+			colourPicker.Close +=
+				(_, _) =>
+				{
+					grdTopLevel.Children.Remove(colourPicker);
+					grdLayout.IsEnabled = true;
+				};
+		}
 	}
 }
