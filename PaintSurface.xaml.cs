@@ -78,6 +78,34 @@ namespace SubDesigner
 			OnChangeMade(changedItem);
 		}
 
+		private void manipulator_Raise(object? sender, EventArgs e)
+		{
+			if (_manipulator?.Wrapped is FrameworkElement selectedItem)
+			{
+				int currentIndex = cnvContents.Children.IndexOf(selectedItem);
+
+				if (currentIndex + 1 < cnvContents.Children.Count)
+				{
+					cnvContents.Children.RemoveAt(currentIndex);
+					cnvContents.Children.Insert(currentIndex + 1, selectedItem);
+				}
+			}
+		}
+
+		private void manipulator_Lower(object? sender, EventArgs e)
+		{
+			if (_manipulator?.Wrapped is FrameworkElement selectedItem)
+			{
+				int currentIndex = cnvContents.Children.IndexOf(selectedItem);
+
+				if (currentIndex > 0)
+				{
+					cnvContents.Children.RemoveAt(currentIndex);
+					cnvContents.Children.Insert(currentIndex - 1, selectedItem);
+				}
+			}
+		}
+
 		private void manipulator_Delete(object? sender, EventArgs e)
 		{
 			if (_manipulator != null)
@@ -203,6 +231,8 @@ namespace SubDesigner
 
 			_manipulator.Open += manipulator_Open;
 			_manipulator.ChangeMade += manipulator_ChangeMade;
+			_manipulator.Raise += manipulator_Raise;
+			_manipulator.Lower += manipulator_Lower;
 			_manipulator.Delete += manipulator_Delete;
 			_manipulator.LostFocus += manipulator_LostFocus;
 		}

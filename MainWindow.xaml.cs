@@ -325,6 +325,8 @@ namespace SubDesigner
 				_stampCollections.Add(collection);
 			}
 
+			_stampCollections.Sort((x, y) => x.Name.CompareTo(y.Name));
+
 			GC.Collect();
 			GC.WaitForPendingFinalizers();
 			GC.Collect();

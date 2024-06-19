@@ -28,6 +28,8 @@ namespace SubDesigner
 
 		public event EventHandler<UIElement>? Open;
 		public event EventHandler<UIElement>? ChangeMade;
+		public event EventHandler? Raise;
+		public event EventHandler? Lower;
 		public event EventHandler? Delete;
 
 		protected virtual void OnOpen(UIElement? selectedItem)
@@ -39,6 +41,16 @@ namespace SubDesigner
 		protected virtual void OnChangeMade(UIElement? changedItem)
 		{
 			ChangeMade?.Invoke(this, changedItem!);
+		}
+
+		protected virtual void OnRaise()
+		{
+			Raise?.Invoke(this, EventArgs.Empty);
+		}
+
+		protected virtual void OnLower()
+		{
+			Lower?.Invoke(this, EventArgs.Empty);
 		}
 
 		protected virtual void OnDelete()
@@ -295,6 +307,16 @@ namespace SubDesigner
 				pRotateWidget.ReleaseMouseCapture();
 				_rotating = false;
 			}
+		}
+
+		private void cmdRaise_Click(object sender, RoutedEventArgs e)
+		{
+			OnRaise();
+		}
+
+		private void cmdLower_Click(object sender, RoutedEventArgs e)
+		{
+			OnLower();
 		}
 
 		private void cmdDelete_Click(object sender, RoutedEventArgs e)
