@@ -34,7 +34,25 @@
                     <Run FontFamily="Anxiety Management">Design your mug here</Run>
                     <Run FontFamily="Segoe Script">:</Run>
                 </TextBlock>
-                <Button Name="cmdSetBackground" Click="cmdSetBackground_Click" DockPanel.Dock="Top" HorizontalAlignment="Right" Padding="8" FontFamily="Anxiety Management" FontSize="20">Set a background</Button>
+                <DockPanel DockPanel.Dock="Top" LastChildFill="False">
+                    <Label DockPanel.Dock="Left" FontFamily="Anxiety Management" FontSize="25">
+                        <TextBlock>
+                            <Run>Stamps</Run>
+                            <Run FontFamily="Segoe Script">: </Run>
+                            <Run Text="{Binding ElementName=psPaintSurface, Path=StampCount}" />
+                        </TextBlock>
+                    </Label>
+
+                    <Label DockPanel.Dock="Left" FontFamily="Anxiety Management" FontSize="25" Margin="30 0 0 0">
+                        <TextBlock>
+                            <Run>Text</Run>
+                            <Run FontFamily="Segoe Script">: </Run>
+                            <Run Text="{Binding ElementName=psPaintSurface, Path=TextCount}" />
+                        </TextBlock>
+                    </Label>
+
+                    <Button Name="cmdSetBackground" Click="cmdSetBackground_Click" DockPanel.Dock="Right" Padding="8" FontFamily="Anxiety Management" FontSize="20">Set a background</Button>
+                </DockPanel>
                 <Viewbox Name="vbPaintSurfaceContainer" Margin="8">
                     <local:PaintSurface Background="White" x:Name="psPaintSurface" Width="2048" Height="855" MouseDown="StartMugDrag" MouseMove="DoMugDrag" MouseUp="EndMugDrag" Open="psPaintSurface_Open" ChangeMade="psPaintSurface_ChangeMade" />
                 </Viewbox>

@@ -14,12 +14,9 @@ namespace SubDesigner
 	/// </summary>
 	public partial class PaintSurface : UserControl
 	{
-		static PaintSurface()
-		{
-			HasSelectionProperty = DependencyProperty.Register(nameof(HasSelection), typeof(bool), typeof(PaintSurface));
-		}
-
-		public readonly static DependencyProperty HasSelectionProperty;
+		public readonly static DependencyProperty HasSelectionProperty = DependencyProperty.Register(nameof(HasSelection), typeof(bool), typeof(PaintSurface));
+		public readonly static DependencyProperty StampCountProperty = DependencyProperty.Register(nameof(StampCount), typeof(int), typeof(PaintSurface));
+		public readonly static DependencyProperty TextCountProperty = DependencyProperty.Register(nameof(TextCount), typeof(int), typeof(PaintSurface));
 
 		public PaintSurface()
 		{
@@ -39,6 +36,18 @@ namespace SubDesigner
 		{
 			get => (bool)GetValue(HasSelectionProperty);
 			set => SetValue(HasSelectionProperty, value);
+		}
+
+		public int StampCount
+		{
+			get => (int)GetValue(StampCountProperty);
+			set => SetValue(StampCountProperty, value);
+		}
+
+		public int TextCount
+		{
+			get => (int)GetValue(TextCountProperty);
+			set => SetValue(TextCountProperty, value);
 		}
 
 		bool _pauseChangeEvents = false;
@@ -171,6 +180,8 @@ namespace SubDesigner
 
 			cnvContents.Children.Add(text);
 
+			TextCount = cnvContents.Children.OfType<TextHost>().Count();
+
 			text.MouseDown += element_MouseDown;
 		}
 
@@ -198,6 +209,8 @@ namespace SubDesigner
 
 			cnvContents.Children.Add(stamp);
 
+			StampCount = cnvContents.Children.OfType<Image>().Count();
+
 			stamp.MouseDown += element_MouseDown;
 		}
 
@@ -210,6 +223,8 @@ namespace SubDesigner
 		{
 			ClearSelection();
 			cnvContents.Children.Clear();
+			StampCount = 0;
+			TextCount = 0;
 			OnChangeMade(null);
 		}
 
@@ -218,6 +233,11 @@ namespace SubDesigner
 			ClearSelection();
 			cnvContents.Children.Remove(element);
 			OnChangeMade(element);
+
+			if (element is TextHost)
+				TextCount = cnvContents.Children.OfType<TextHost>().Count();
+			else
+				StampCount = cnvContents.Children.OfType<Image>().Count();
 		}
 
 		private void element_MouseDown(object sender, MouseButtonEventArgs e)
@@ -362,6 +382,9 @@ namespace SubDesigner
 							element.IsFlipped);
 					}
 				}
+
+				TextCount = cnvContents.Children.OfType<TextHost>().Count();
+				StampCount = cnvContents.Children.OfType<Image>().Count();
 			}
 			finally
 			{
