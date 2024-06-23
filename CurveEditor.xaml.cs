@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Linq;
+using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
+using System.Windows.Threading;
 
 namespace SubDesigner
 {
@@ -150,30 +152,25 @@ namespace SubDesigner
 
 				var anim = new RectAnimation();
 
-				anim.From = elementBounds;
-				anim.To = fitBounds;
+				anim.StartRect = elementBounds;
+				anim.EndRect = fitBounds;
 				anim.Duration = TimeSpan.FromSeconds(0.4);
-
-				var animTarget = new AnimationTarget();
-
-				animTarget.StartRect = elementBounds;
-				animTarget.EndRect = fitBounds;
 
 				System.Diagnostics.Debug.WriteLine("Animate to: " + fitBounds);
 
 				anim.Completed += (_, _) => System.Diagnostics.Debug.WriteLine("Animation completed");
 
-				animTarget.RectChanged +=
+				anim.RectChanged +=
 					(_, _) =>
 					{
 						try
 						{
-							SetStartPoint(animTarget.TransformPoint(startPoint));
-							SetEndPoint(animTarget.TransformPoint(endPoint));
-							SetBendPoint1(animTarget.TransformPoint(bendPoint1));
-							SetBendPoint2(animTarget.TransformPoint(bendPoint2));
+							SetStartPoint(anim.TransformPoint(startPoint));
+							SetEndPoint(anim.TransformPoint(endPoint));
+							SetBendPoint1(anim.TransformPoint(bendPoint1));
+							SetBendPoint2(anim.TransformPoint(bendPoint2));
 
-							System.Diagnostics.Debug.WriteLine("Animation frame: " + animTarget.Rect);
+							System.Diagnostics.Debug.WriteLine("Animation frame: " + anim.Rect);
 						}
 						catch
 						{
@@ -181,21 +178,92 @@ namespace SubDesigner
 						}
 					};
 
-				animTarget.BeginAnimation(AnimationTarget.RectProperty, anim);
+				anim.BeginAnimation();
 			}
 		}
 
-		class AnimationTarget : UIElement
+		class RectAnimation : UIElement
 		{
-			public static DependencyProperty RectProperty = DependencyProperty.Register(nameof(Rect), typeof(Rect), typeof(AnimationTarget), new UIPropertyMetadata(RectChangedCallback));
+			public static DependencyProperty RectProperty = DependencyProperty.Register(nameof(Rect), typeof(Rect), typeof(RectAnimation), new UIPropertyMetadata(RectChangedCallback));
 
 			public Rect StartRect;
 			public Rect EndRect;
+			public TimeSpan Duration;
+
+			public event EventHandler? Completed;
 
 			public Rect Rect
 			{
 				get => (Rect)GetValue(RectProperty);
 				set => SetValue(RectProperty, value);
+			}
+
+			public void BeginAnimation()
+			{
+				var thread = new Thread(AnimationThreadProc);
+
+				thread.IsBackground = true;
+				thread.Start();
+			}
+
+			void AnimationThreadProc()
+			{
+				try
+				{
+					DateTime startTime = DateTime.UtcNow;
+					DateTime endTime = startTime + Duration;
+
+					var startRect = StartRect;
+					var endRect = EndRect;
+
+					while (true)
+					{
+						DateTime now = DateTime.UtcNow;
+
+						if (now >= endTime)
+							break;
+
+						double progress = (now - startTime) / Duration;
+
+						AnimationTick(startRect, endRect, progress);
+
+						Thread.Sleep(10);
+					}
+
+					Rect = endRect;
+
+					Completed?.Invoke(this, EventArgs.Empty);
+				}
+				catch { }
+			}
+
+			bool _tickOutstanding = false;
+			RectReference? _tickRect;
+
+			// Allow for atomic updates.
+			record RectReference(Rect Value);
+
+			void AnimationTick(Rect startRect, Rect endRect, double progress)
+			{
+				_tickRect = new RectReference(new Rect(
+					startRect.X + (endRect.X - startRect.X) * progress,
+					startRect.Y + (endRect.Y - startRect.Y) * progress,
+					startRect.Width + (endRect.Width - startRect.Width) * progress,
+					startRect.Height + (endRect.Height - startRect.Height) * progress));
+
+				if (!_tickOutstanding)
+				{
+					_tickOutstanding = true;
+
+					Dispatcher.BeginInvoke(
+						DispatcherPriority.Send,
+						() =>
+						{
+							if (_tickRect != null)
+								Rect = _tickRect.Value;
+							_tickOutstanding = false;
+						});
+				}
 			}
 
 			public Point TransformPoint(Point pt)
@@ -214,7 +282,7 @@ namespace SubDesigner
 
 			static void RectChangedCallback(DependencyObject d, DependencyPropertyChangedEventArgs e)
 			{
-				((AnimationTarget)d).RectChanged?.Invoke(d, EventArgs.Empty);
+				((RectAnimation)d).RectChanged?.Invoke(d, EventArgs.Empty);
 			}
 		}
 
