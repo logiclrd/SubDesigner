@@ -143,7 +143,10 @@ namespace SubDesigner
 					fitBounds.X = (cnvEditor.ActualWidth - fitBounds.Width) / 2;
 				}
 
-				fitBounds.Inflate(-FitMargin, -FitMargin);
+				if (fitBounds.Width > FitMargin * 2)
+					fitBounds.Inflate(-FitMargin, 0);
+				if (fitBounds.Height > FitMargin * 2)
+					fitBounds.Inflate(0, -FitMargin);
 
 				var anim = new RectAnimation();
 
