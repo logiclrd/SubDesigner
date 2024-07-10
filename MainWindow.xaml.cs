@@ -706,6 +706,8 @@ namespace SubDesigner
 							{
 								grdTopLevel.Children.Remove(printQueued);
 								grdLayout.IsEnabled = true;
+
+								StartNewMug();
 							};
 					}
 					else

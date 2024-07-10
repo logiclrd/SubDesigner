@@ -220,17 +220,17 @@ namespace SubDesigner
 					{
 						DateTime now = DateTime.UtcNow;
 
-						if (now >= endTime)
-							break;
-
 						double progress = (now - startTime) / Duration;
+
+						if ((progress < 0.0) || (progress > 1.0))
+							break;
 
 						AnimationTick(startRect, endRect, progress);
 
 						Thread.Sleep(10);
 					}
 
-					Rect = endRect;
+					AnimationTick(startRect, endRect, 1.0);
 
 					Completed?.Invoke(this, EventArgs.Empty);
 				}

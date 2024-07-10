@@ -9,13 +9,13 @@
         </Grid.RowDefinitions>
 
         <Label Grid.Row="0" HorizontalAlignment="Center" VerticalAlignment="Center" FontFamily="Anxiety Management" FontSize="50" Padding="100">
-            <StackPanel Orientation="Horizontal">
-                <Path Fill="Green" Data="M32,2C15.431,2,2,15.432,2,32c0,16.568,13.432,30,30,30c16.568,0,30-13.432,30-30C62,15.432,48.568,2,32,2z M25.025,50l-0.02-0.02L24.988,50L11,35.6l7.029-7.164l6.977,7.184l21-21.619L53,21.199L25.025,50z" Margin="30 0" />
+            <DockPanel>
+                <Path DockPanel.Dock="Left" VerticalAlignment="Top" Fill="Green" Data="M32,2C15.431,2,2,15.432,2,32c0,16.568,13.432,30,30,30c16.568,0,30-13.432,30-30C62,15.432,48.568,2,32,2z M25.025,50l-0.02-0.02L24.988,50L11,35.6l7.029-7.164l6.977,7.184l21-21.619L53,21.199L25.025,50z" Margin="30 0" />
                 <TextBlock TextWrapping="Wrap" TextAlignment="Center">
                     Your design has been saved to the print queue.
                     It is now awaiting payment.
                 </TextBlock>
-            </StackPanel>
+            </DockPanel>
         </Label>
 
         <Button Grid.Row="1" Width="250" FontFamily="Anxiety Management" FontSize="40" Margin="10" Name="cmdOK" Click="cmdOK_Click">OK</Button>
